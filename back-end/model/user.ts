@@ -57,6 +57,7 @@ export class User {
             schedule: schedule ? Schedule.from(schedule) : undefined,
         });
     }
+    
     validate(user: {
         id?: number;
         username: string;
