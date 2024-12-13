@@ -61,8 +61,12 @@ recipeRouter.get('/', async (req: Request, res: Response, next: NextFunction) =>
 recipeRouter.get('/:recipeId', async (req: Request, res: Response, next: NextFunction) => {
     const { recipeId } = req.params;
     try {
-        const recipe = await recipeService.getRecipeById(parseInt(recipeId));
-        res.status(200).json(recipe.toJSON());
+        const recipe = await recipeService.getRecipeById({ id: parseInt(recipeId) });
+        if (recipe) {
+            res.status(200).json(recipe.toJSON());
+        } else {
+            res.status(404).send('Recipe not found');
+        }
     } catch (error) {
         next(error); // passes the error to the error-handling middleware in app.ts
     }

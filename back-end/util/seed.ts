@@ -188,6 +188,23 @@ const main = async () => {
         },
     });
 
+    const recipe7 = await prisma.recipe.create({
+        data: {
+            id: 7,
+            title: 'Tomato Cheese Bread',
+            instructions:
+                'Spread tomato sauce on bread slices, sprinkle cheese, and bake at 180°C for 5-7 minutes.',
+            cookingTime: 10,
+            category: 'SNACK',
+            userId: user1.id,
+            scheduleId: schedule1.id,
+            imageUrl:
+                'https://images.unsplash.com/photo-1556911220-e15b29be8c13?auto=format&fit=crop&w=1170&q=80',
+            isFavorite: false,
+            scheduledDate: new Date('2024-12-15'),
+        },
+    });
+
     await prisma.recipeIngredient.createMany({
         data: [
             { recipeId: recipe1.id, ingredientId: 1, unit: 'g', quantity: 200 },
@@ -204,6 +221,9 @@ const main = async () => {
             { recipeId: recipe6.id, ingredientId: 11, unit: 'g', quantity: 150 },
             { recipeId: recipe6.id, ingredientId: 12, unit: 'g', quantity: 100 },
             { recipeId: recipe6.id, ingredientId: 13, unit: 'g', quantity: 170 },
+            { recipeId: recipe7.id, ingredientId: 2, unit: 'ml', quantity: 50 },
+            { recipeId: recipe7.id, ingredientId: 6, unit: 'g', quantity: 40 },
+            { recipeId: recipe7.id, ingredientId: 5, unit: 'slices', quantity: 2 },
         ],
     });
 };

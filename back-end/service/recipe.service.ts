@@ -3,15 +3,30 @@ import { RecipeIngredient } from '../model/recipeIngredient';
 import { Ingredient } from '../model/ingredient';
 import recipeDb from '../repository/recipe.db';
 import { RecipeUpdateInput } from '../types';
+import database from '../repository/database';
 
 const getAllRecipes = async (): Promise<Recipe[]> => {
     return await recipeDb.getAllRecipes();
 };
 
-const getRecipeById = async (id: number): Promise<Recipe> => {
-    const recipe = await recipeDb.getRecipeById({ id });
-    if (!recipe) throw new Error(`Recipe with id ${id} does not exist.`);
-    return recipe;
+const getRecipeById = async ({ id }: { id: number }): Promise<Recipe | null> => {
+    try {
+        const recipePrisma = await database.recipe.findUnique({
+            where: { id },
+            include: {
+                ingredients: {
+                    include: {
+                        ingredient: true,
+                    },
+                },
+            },
+        });
+        if (!recipePrisma) return null;
+        return Recipe.from(recipePrisma);
+    } catch (error) {
+        console.log(error);
+        throw new Error('Database error. See server log for details');
+    }
 };
 
 const getIngredientsForRecipes = async (recipeIds: number[]): Promise<any[]> => {
