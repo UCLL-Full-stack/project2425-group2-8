@@ -1,3 +1,5 @@
+import { Ingredient } from "@/types/recipes";
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const fetchMealDetails = async (userId: number, date: string) => {
@@ -14,6 +16,29 @@ const fetchMealDetails = async (userId: number, date: string) => {
 
   const data = await response.json();
   return data;
+};
+
+const fetchIngredientsForRecipes = async (
+  recipeIds: number[]
+): Promise<Ingredient[]> => {
+  try {
+    const response = await fetch(`${apiUrl}/recipes/ingredients`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ recipeIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch ingredients");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching ingredients:", error);
+    throw error;
+  }
 };
 
 const updateMealDate = async (
@@ -66,6 +91,11 @@ const deleteMeal = async (userId: number, recipeId: number, date: string) => {
   }
 };
 
-const PlannerService = { fetchMealDetails, updateMealDate, deleteMeal };
+const PlannerService = {
+  fetchMealDetails,
+  updateMealDate,
+  deleteMeal,
+  fetchIngredientsForRecipes,
+};
 
 export default PlannerService;

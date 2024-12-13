@@ -10,11 +10,15 @@ import PlannerService from "@/services/PlannerService";
 import CalendarHeader from "./CalendarHeader";
 import CalendarDay from "./CalendarDay";
 import DailyMealsPopup from "../calendar-functionality/DailyMealsPopup";
-import { Recipe } from "@/types/recipes";
+import { Ingredient, Recipe } from "@/types/recipes";
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]; // make a type?
 
-const CalendarGrid: React.FC = () => {
+type Props = {
+  setShoppingListIngredients: (ingredients: Ingredient[]) => void;
+};
+
+const CalendarGrid: React.FC<Props> = ({ setShoppingListIngredients }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"Month" | "Week">("Month"); // to implement
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -137,11 +141,29 @@ const CalendarGrid: React.FC = () => {
     }
   };
 
-  const handleAddToShoppingList = () => {
+  const handleAddToShoppingList = async () => {
     if (selectedDates.length === 0) {
       return;
     }
-    // to implement!
+
+    const recipeIds = selectedDates.flatMap(
+      (date) =>
+        recipesByDate[formatDateUTC(date)]?.map((recipe) => recipe.id) || []
+    );
+    if (recipeIds.length === 0) {
+      return;
+    }
+
+    try {
+      const ingredients = await PlannerService.fetchIngredientsForRecipes(
+        recipeIds
+      );
+
+      // send ingredients to the shopping list sidebar component
+      setShoppingListIngredients(ingredients);
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+    }
   };
 
   const handleDeleteMeals = () => {
