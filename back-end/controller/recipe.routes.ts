@@ -3,7 +3,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import recipeService from '../service/recipe.service';
 import { Role } from '../types';
-import userService from '../service/user.service.ts';
+import userService from '../service/user.service';
 
 const recipeRouter = express.Router();
 

@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { ProfileUpdateInput, Role } from '../types';
 import profileService from '../service/profile.service';
-import userService from '../service/user.service.ts';
+import userService from '../service/user.service';
 
 const profileRouter = express.Router();
 

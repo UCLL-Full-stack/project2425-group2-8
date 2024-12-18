@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
-import userService from '../service/user.service.ts';
+import userService from '../service/user.service';
 import { UserSignupInput, UserLoginInput, Role } from '../types/index.js';
 
 const userRouter = express.Router();

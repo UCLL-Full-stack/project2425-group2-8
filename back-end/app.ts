@@ -31,6 +31,28 @@ const swaggerOptions = {
             },
         },
     },
+    schemas: {
+        Recipe: {
+            type: 'object',
+            properties: {
+                id: {
+                    type: 'integer',
+                },
+                name: {
+                    type: 'string',
+                },
+                description: {
+                    type: 'string',
+                },
+                ingredients: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                },
+            },
+        },
+    },
     apis: ['./controller/*.routes.ts'],
 };
 
