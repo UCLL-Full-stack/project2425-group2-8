@@ -39,6 +39,19 @@ const DailyMealsPopup: React.FC<Props> = ({ userId, date, onClose }) => {
     return utcDate.toISOString().split("T")[0];
   };
 
+  // const fetcher = async (url: string) => {
+  //   const dateString = formatDateUTC(date);
+  //   return await PlannerService.fetchMealDetails(userId, dateString);
+  // };
+
+  // const { data: meals, error } = useSWR(
+  //   `/schedules/${userId}/${formatDateUTC(date)}`,
+  //   fetcher
+  // );
+
+  // if (error) return <div>Error fetching meals</div>;
+  // if (!meals) return <div>Loading...</div>;
+
   // to refresh after changes (delete or update) --> useCallback: only changes if one of the inputs has changed
   const fetchMeals = useCallback(async () => {
     try {
