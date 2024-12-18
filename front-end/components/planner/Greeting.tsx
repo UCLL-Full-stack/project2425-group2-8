@@ -1,14 +1,11 @@
-/*
- * A greeting message for the user based on the current time of day :)
- * Still to fully implement as it will take the @username
- * It shows "Good morning" with a coffee icon, "Good afternoon" with a sun icon,
- * and "Good evening" with a moon icon
- */
-
 import { Coffee, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const Greeting = () => {
+type GreetingProps = {
+  user: { name: string } | null;
+};
+
+const Greeting: React.FC<GreetingProps> = ({ user }) => {
   const [greeting, setGreeting] = useState("");
   const [greetingIcon, setGreetingIcon] = useState(<Sun />);
 
@@ -27,12 +24,21 @@ const Greeting = () => {
     }
   }, []);
 
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
+
   return (
     <article className="flex items-center py-2 px-0 w-full">
       <div className="flex items-center text-gray-600">
         {greetingIcon}
-        {/*@username as placeholder temporarily*/}
-        <p className="ml-2 text-lg font-semibold m-0">{greeting}, @username!</p>
+        <p className="ml-2 text-lg font-semibold m-0">
+          {greeting},{" "}
+          <span className="font-bold">
+            {user ? capitalizeFirstLetter(user.name) : ""}
+          </span>
+          !
+        </p>
       </div>
     </article>
   );

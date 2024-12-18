@@ -20,7 +20,7 @@ const AuthToggle = () => {
   const router = useRouter();
 
   const handleSuccess = () => {
-    router.push("/"); // redirects to homepage after successful login/signup
+    router.push("/planner"); // redirects to planner page after successful login/signup
   };
 
   const handleTabChange = (value: string) => {

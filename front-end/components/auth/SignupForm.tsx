@@ -119,8 +119,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           password,
         };
         await authService.register(registerData);
-        onSuccess();
-        router.push("/"); // Redirect to home on success
+        onSuccess(); // Call onSuccess to handle redirection
       } catch (error) {
         setFormError("Registration failed. Please try again.");
       }

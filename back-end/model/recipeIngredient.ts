@@ -61,8 +61,16 @@ export class RecipeIngredient {
         return this.unit;
     }
 
+    setUnit(unit: string) {
+        this.unit = unit;
+    }
+
     getQuantity(): number {
         return this.quantity;
+    }
+
+    setQuantity(quantity: number) {
+        this.quantity = quantity;
     }
 
     toJSON() {

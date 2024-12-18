@@ -1,80 +1,123 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import authService from "@/services/authService";
-import { LoginData } from "@/types/auth";
+import { LoginData, StatusMessage } from "@/types/auth";
 import { AlertCircle } from "lucide-react";
+import AuthService from "@/services/AuthService";
 
 type Props = {
   onSuccess: () => void;
 };
 
 const LoginForm: React.FC<Props> = ({ onSuccess }) => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [formError, setFormError] = useState("");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
 
   const router = useRouter();
 
-  const validateEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (!value.includes("@")) {
-      setEmailError("Invalid email address.");
-    } else {
-      setEmailError("");
-    }
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+  }, []);
+
+  const clearErrors = () => {
+    setUsernameError(null);
+    setPasswordError(null);
+    setFormError(null);
+    setStatusMessages([]);
   };
 
-  const validatePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    if (value.length < 6) {
+  const validate = (): boolean => {
+    let result = true;
+
+    if (!username || username.trim() === "") {
+      setUsernameError("Username is required.");
+      result = false;
+    } else {
+      setUsernameError("");
+    }
+
+    if (!password || password.trim() === "") {
+      setPasswordError("Password is required.");
+      result = false;
+    } else if (password.length < 6) {
       setPasswordError("Password must be at least 6 characters.");
+      result = false;
     } else {
       setPasswordError("");
     }
+
+    return result;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email) setEmailError("Email is required");
-    if (!password) setPasswordError("Password is required");
+    clearErrors();
 
-    if (!emailError && !passwordError) {
-      try {
-        const loginData: LoginData = { email, password };
-        await authService.login(loginData);
-        onSuccess();
-        router.push("/"); // Redirect to home on success
-      } catch (error) {
-        setFormError("Invalid email or password. Please try again.");
+    if (!validate()) {
+      return;
+    }
+
+    const loginData: LoginData = { username, password };
+
+    try {
+      const response = await AuthService.login(loginData);
+
+      if (response.ok) {
+        const userData = await response.json();
+
+        setStatusMessages([
+          {
+            message: "Login successful",
+            type: "success",
+          },
+        ]);
+
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("role", userData.role);
+        localStorage.setItem(
+          "loggedInUser",
+          JSON.stringify({
+            token: userData.token,
+            fullname: userData.fullname,
+            username: userData.username,
+            role: userData.role,
+          })
+        );
+
+        setTimeout(() => {
+          router.push("/planner");
+        }, 2000);
+      } else {
+        setFormError("Invalid username or password. Please try again.");
       }
+    } catch (error) {
+      setFormError("Invalid username or password. Please try again.");
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
-          value={email}
-          onChange={validateEmail}
+          id="username"
+          name="username"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
           required
         />
-        {emailError && (
+        {usernameError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{emailError}</AlertDescription>
+            <AlertDescription>{usernameError}</AlertDescription>
           </Alert>
         )}
       </div>
@@ -85,7 +128,7 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
           name="password"
           type="password"
           value={password}
-          onChange={validatePassword}
+          onChange={(event) => setPassword(event.target.value)}
           required
         />
         {passwordError && (
@@ -101,9 +144,7 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       )}
-      <Button type="submit" className="w-full">
-        Login
-      </Button>
+      <Button type="submit">Login</Button>
     </form>
   );
 };

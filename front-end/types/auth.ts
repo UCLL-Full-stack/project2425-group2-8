@@ -1,3 +1,5 @@
+import { Recipe } from "../types/recipes";
+
 export type RegisterData = {
   firstName: string;
   lastName: string;
@@ -7,6 +9,20 @@ export type RegisterData = {
 };
 
 export type LoginData = {
-  email: string;
+  username: string;
   password: string;
+};
+
+export type UserTable = {
+  id: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+};
+
+export type StatusMessage = {
+  message: string;
+  type: "error" | "success";
 };

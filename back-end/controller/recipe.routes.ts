@@ -1,7 +1,7 @@
-// ---- Used in User Story 2 ----
-
 import express, { NextFunction, Request, Response } from 'express';
 import recipeService from '../service/recipe.service';
+import { Role } from '../types';
+import userService from '../service/user.service';
 
 const recipeRouter = express.Router();
 
@@ -9,15 +9,17 @@ const recipeRouter = express.Router();
  * @swagger
  * tags:
  *   name: Recipes
- *   description: Recipe management
+ *   description: Recipes management
  */
 
 /**
  * @swagger
  * /recipes:
  *   get:
- *     summary: Retrieve a list of recipes
- *     description: Retrieve a list of all recipes from the database.
+ *     summary: Retrieve a list of recipes for the logged-in user
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: A list of recipes
@@ -32,8 +34,12 @@ const recipeRouter = express.Router();
  */
 recipeRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const recipe = await recipeService.getAllRecipes();
-        res.status(200).json(recipe);
+        const request = req as Request & { auth: { username: string; role: Role } };
+        const { username } = request.auth;
+        const userId = await userService.getUserIdFromUsername(username);
+
+        const recipes = await recipeService.getRecipesByUserId(userId);
+        res.status(200).json(recipes.map((recipe) => recipe.toJSON()));
     } catch (error) {
         next(error);
     }
@@ -45,6 +51,8 @@ recipeRouter.get('/', async (req: Request, res: Response, next: NextFunction) =>
  *   get:
  *     summary: Get a recipe by ID
  *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: recipeId
@@ -61,12 +69,11 @@ recipeRouter.get('/', async (req: Request, res: Response, next: NextFunction) =>
 recipeRouter.get('/:recipeId', async (req: Request, res: Response, next: NextFunction) => {
     const { recipeId } = req.params;
     try {
-        const recipe = await recipeService.getRecipeById({ id: parseInt(recipeId) });
-        if (recipe) {
-            res.status(200).json(recipe.toJSON());
-        } else {
-            res.status(404).send('Recipe not found');
-        }
+        const request = req as Request & { auth: { username: string; role: Role } };
+        const { username, role } = request.auth;
+
+        const recipe = await recipeService.getRecipeById(parseInt(recipeId));
+        res.status(200).json(recipe.toJSON());
     } catch (error) {
         next(error); // passes the error to the error-handling middleware in app.ts
     }
@@ -88,6 +95,8 @@ recipeRouter.post('/ingredients', async (req: Request, res: Response, next: Next
  *   put:
  *     summary: Update a recipe by ID
  *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: recipeId
@@ -100,30 +109,28 @@ recipeRouter.post('/ingredients', async (req: Request, res: Response, next: Next
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               ingredients:
- *                 type: array
- *                 items:
- *                   type: string
+ *             $ref: '#/components/schemas/RecipeUpdateInput'
  *     responses:
  *       200:
  *         description: The updated recipe object
+ *       403:
+ *         description: Unauthorized access
  *       404:
  *         description: Recipe not found
  */
 recipeRouter.put('/:recipeId', async (req: Request, res: Response, next: NextFunction) => {
     const { recipeId } = req.params;
     const recipeInputData = req.body;
-    const userId = 1; // TEMPORARY USER ID
-
     try {
+        const request = req as Request & { auth: { username: string; role: Role } };
+        const { username, role } = request.auth;
+        const userId = await userService.getUserIdFromUsername(username);
+
         const updatedRecipe = await recipeService.updateRecipe(
             parseInt(recipeId),
             recipeInputData,
-            userId
+            userId,
+            role
         );
         res.status(200).json(updatedRecipe.toJSON());
     } catch (error) {
@@ -137,6 +144,8 @@ recipeRouter.put('/:recipeId', async (req: Request, res: Response, next: NextFun
  *   delete:
  *     summary: Delete a recipe by ID
  *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: recipeId
@@ -147,16 +156,22 @@ recipeRouter.put('/:recipeId', async (req: Request, res: Response, next: NextFun
  *     responses:
  *       204:
  *         description: No content
+ *       403:
+ *         description: Unauthorized access
  *       404:
  *         description: Recipe not found
  */
 recipeRouter.delete('/:recipeId', async (req: Request, res: Response, next: NextFunction) => {
     const { recipeId } = req.params;
     try {
-        await recipeService.deleteRecipe(parseInt(recipeId));
-        res.status(204).send(); // server processed the request but there's no response body
+        const request = req as Request & { auth: { username: string; role: Role } };
+        const { username, role } = request.auth;
+        const userId = await userService.getUserIdFromUsername(username);
+
+        await recipeService.deleteRecipe(parseInt(recipeId), userId, role);
+        res.status(204).send();
     } catch (error) {
-        next(error);
+        res.status(500).json({ status: 'internal server error', message: 'Something went wrong!' });
     }
 });
 

@@ -48,37 +48,6 @@ export class Recipe {
         this.scheduledDate = recipe.scheduledDate;
     }
 
-    // static from({
-    //     id,
-    //     title,
-    //     instructions,
-    //     cookingTime,
-    //     category,
-    //     ingredients,
-    //     imageUrl,
-    //     isFavorite,
-    //     notes,
-    //     source,
-    //     scheduledDate,
-    // }: RecipePrisma & {
-    //     ingredients: RecipeIngredientPrisma[];
-    //     category: CategoryPrisma;
-    // }): Recipe {
-    //     return new Recipe({
-    //         id,
-    //         title,
-    //         instructions,
-    //         cookingTime,
-    //         category: category as RecipeCategory,
-    //         ingredients: ingredients.map((ingredient) => RecipeIngredient.from(ingredient)),
-    //         imageUrl: imageUrl || undefined,
-    //         isFavorite: isFavorite || undefined,
-    //         notes: notes || undefined,
-    //         source: source || undefined,
-    //         scheduledDate: scheduledDate || undefined,
-    //     });
-    // }
-
     static from({
         id,
         title,
@@ -250,6 +219,25 @@ export class Recipe {
         this.ingredients = ingredients;
     }
 
+    addIngredient(ingredient: RecipeIngredient) {
+        this.ingredients.push(ingredient);
+    }
+
+    removeIngredient(ingredientId: number) {
+        this.ingredients = this.ingredients.filter(
+            (ingredient) => ingredient.getIngredientId() !== ingredientId
+        );
+    }
+
+    updateIngredient(updatedIngredient: RecipeIngredient) {
+        const index = this.ingredients.findIndex(
+            (ingredient) => ingredient.getIngredientId() === updatedIngredient.getIngredientId()
+        );
+        if (index !== -1) {
+            this.ingredients[index] = updatedIngredient;
+        }
+    }
+
     getImageUrl(): string | undefined {
         return this.imageUrl;
     }
@@ -323,16 +311,26 @@ export class Recipe {
             this.setCategory(updateInput.category as RecipeCategory);
         }
         if (updateInput.ingredients !== undefined) {
-            const ingredients = updateInput.ingredients.map(
-                (ingredient) =>
-                    new RecipeIngredient({
-                        recipeId: this.id ?? 0,
-                        ingredientId: ingredient.ingredient.getId() ?? 0,
-                        unit: ingredient.unit,
-                        quantity: ingredient.quantity,
-                    })
-            );
-            this.setIngredients(ingredients);
+            updateInput.ingredients.forEach((ingredientUpdate) => {
+                const existingIngredient = this.ingredients.find(
+                    (ingredient) =>
+                        ingredient.getIngredientId() === ingredientUpdate.ingredient.getId()
+                );
+                if (existingIngredient) {
+                    existingIngredient.setUnit(ingredientUpdate.unit);
+                    existingIngredient.setQuantity(ingredientUpdate.quantity);
+                } else {
+                    this.addIngredient(
+                        new RecipeIngredient({
+                            recipeId: this.id ?? 0,
+                            ingredientId: ingredientUpdate.ingredient.getId() ?? 0,
+                            unit: ingredientUpdate.unit,
+                            quantity: ingredientUpdate.quantity,
+                            ingredient: ingredientUpdate.ingredient,
+                        })
+                    );
+                }
+            });
         }
         if (updateInput.imageUrl !== undefined) {
             this.setImageUrl(updateInput.imageUrl);
@@ -345,6 +343,9 @@ export class Recipe {
         }
         if (updateInput.source !== undefined) {
             this.setSource(updateInput.source);
+        }
+        if (updateInput.scheduledDate !== undefined) {
+            this.setScheduledDate(updateInput.scheduledDate);
         }
     }
 

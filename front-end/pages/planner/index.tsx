@@ -1,34 +1,32 @@
-/* This is currently the homepage of the app, hence why the <Head /> and meta information */
-
-import { useState } from "react";
 import CalendarGrid from "@/components/planner/calendar/CalendarGrid";
 import Greeting from "@/components/planner/Greeting";
-import Head from "next/head";
-import { Ingredient } from "@/types/recipes";
-import ShoppingListSidebar from "@/components/planner/ShoppingListSidebar";
+import ShoppingList from "@/components/planner/ShoppingListSidebar";
+import { useEffect, useState } from "react";
 
 const MealPlanner: React.FC = () => {
-  const [shoppingListIngredients, setShoppingListIngredients] = useState<
-    Ingredient[]
-  >([]);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userToken = localStorage.getItem("loggedInUser");
+    if (userToken) {
+      try {
+        const user = JSON.parse(userToken);
+        if (user.token) {
+          setUser({ name: user.username });
+        }
+      } catch (e) {
+        console.error("Failed to parse LoggedInUser:", e);
+      }
+    }
+  }, []);
 
   return (
     <>
-      <Head>
-        <title>Plateful</title>
-        <meta
-          name="description"
-          content="Plateful - Your personal meal planning and shopping list app"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       {/* Main Content */}
       <main className="flex h-screen overflow-hidden">
         <section className="flex-1 overflow-auto">
           <section className="p-6">
-            <Greeting />
+            <Greeting user={user} />
             <h1 className="text-2xl font-bold mb-3">Meal Planner</h1>
             <CalendarGrid
               setShoppingListIngredients={setShoppingListIngredients}

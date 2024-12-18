@@ -14,6 +14,7 @@ model User {
   profile   Profile?
   recipes   Recipe[]
   schedule  Schedule?
+  role      String
 }
 
 model Profile {

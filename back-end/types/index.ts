@@ -1,5 +1,7 @@
 import { Ingredient } from '../model/ingredient';
 
+type Role = 'admin' | 'user' | 'guest';
+
 type UserSignupInput = {
     firstName: string;
     lastName: string;
@@ -13,10 +15,18 @@ type UserLoginInput = {
     password: string;
 };
 
+type AuthenticationResponse = {
+    token: string;
+    username: string;
+    fullname: string;
+    role: string;
+};
+
 type ProfileUpdateInput = {
     firstName: string;
     lastName: string;
     email: string;
+    role: Role;
 };
 
 type NewRecipeInput = {
@@ -45,6 +55,7 @@ type RecipeUpdateInput = {
     isFavorite?: boolean;
     notes?: string;
     source?: string;
+    scheduledDate?: Date;
 };
 
 type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'other';
@@ -67,4 +78,6 @@ export {
     NewRecipeInput,
     RecipeUpdateInput,
     RecipeCategory,
+    AuthenticationResponse,
+    Role,
 };

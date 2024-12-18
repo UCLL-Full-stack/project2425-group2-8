@@ -2,19 +2,24 @@ import { Ingredient } from "@/types/recipes";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-const fetchMealDetails = async (userId: number, date: string) => {
-  const response = await fetch(`${apiUrl}/schedules/${userId}/${date}`, {
+const fetchMealDetails = async (date: string, token: string) => {
+  console.log(`Fetching meal details for date: ${date} with token: ${token}`);
+  const response = await fetch(`${apiUrl}/schedules?date=${date}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 
+  console.log(`Response status: ${response.status}`);
   if (!response.ok) {
+    console.error("Failed to fetch meal details", await response.text());
     throw new Error("Failed to fetch meal details");
   }
 
   const data = await response.json();
+  console.log("Fetched meal details:", data);
   return data;
 };
 
@@ -42,18 +47,19 @@ const fetchIngredientsForRecipes = async (
 };
 
 const updateMealDate = async (
-  userId: number,
   recipeId: number,
   oldDate: string,
-  newDate: string
+  newDate: string,
+  token: string
 ) => {
   try {
     const response = await fetch(
-      `${apiUrl}/schedules/${userId}/${recipeId}/${oldDate}`,
+      `${apiUrl}/schedules/${recipeId}?date=${oldDate}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ newDate }),
       }
@@ -70,14 +76,15 @@ const updateMealDate = async (
   }
 };
 
-const deleteMeal = async (userId: number, recipeId: number, date: string) => {
+const deleteMeal = async (recipeId: number, date: string, token: string) => {
   try {
     const response = await fetch(
-      `${apiUrl}/schedules/${userId}/${recipeId}/${date}`,
+      `${apiUrl}/schedules/${recipeId}?date=${date}`,
       {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );

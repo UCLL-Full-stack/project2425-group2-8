@@ -1,63 +1,188 @@
-import { Profile } from '../model/profile';
+import { PrismaClient, RecipeCategory } from '@prisma/client';
 import { User } from '../model/user';
+import { Schedule } from '../model/schedule';
+import { Role } from '../types';
 
-const users = [
-    new User({
-        id: 1,
-        username: 'annie',
-        password: '@nnie1234',
-        profile: new Profile({
-            id: 1,
-            firstName: 'Anette',
-            lastName: 'Hardy',
-            email: 'annie@ucll.be',
-            // user: undefined,
-        }),
-    }),
-    new User({
-        id: 2,
-        username: 'shulin',
-        password: 'shul!n1234',
-        profile: new Profile({
-            id: 2,
-            firstName: 'Shulin',
-            lastName: 'Xu',
-            email: 'shulin@ucll.be',
-            // user: undefined,
-        }),
-    }),
-    new User({
-        id: 3,
-        username: 'amelie',
-        password: 'h0tchocol@te101',
-        profile: new Profile({
-            id: 3,
-            firstName: 'Amelie',
-            lastName: 'Lammens',
-            email: 'amelie@ucll.be',
-            // user: undefined,
-        }),
-    }),
-];
+const database = new PrismaClient();
 
-// Set user reference in profiles after user objects are created
-// users.forEach((user) => {
-//     user.getProfile().setUser(user);
-// });
-
-const getAllUsers = (): User[] => users;
-
-const getUserById = ({ id }: { id: number }): User | null => {
-    return users.find((user) => user.getId() === id) || null;
+const getAllUsers = async (): Promise<User[]> => {
+    try {
+        const usersPrisma = await database.user.findMany({
+            include: {
+                profile: true,
+                recipes: {
+                    include: {
+                        ingredients: true,
+                    },
+                },
+                schedule: {
+                    include: {
+                        recipes: {
+                            include: {
+                                ingredients: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        return usersPrisma.map((userPrisma) =>
+            User.from({ ...userPrisma, role: userPrisma.role as Role })
+        );
+    } catch (error) {
+        console.error(error);
+        throw new Error('Database error. See server log for details.');
+    }
 };
 
-const addUser = (user: User): User => {
-    users.push(user);
-    return user;
+const getUserById = async ({ id }: { id: number }): Promise<User | null> => {
+    try {
+        const userPrisma = await database.user.findUnique({
+            where: { id },
+            include: {
+                profile: true,
+                recipes: {
+                    include: {
+                        ingredients: true,
+                    },
+                },
+                schedule: {
+                    include: {
+                        recipes: {
+                            include: {
+                                ingredients: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        return userPrisma ? User.from({ ...userPrisma, role: userPrisma.role as Role }) : null;
+    } catch (error) {
+        console.error(error);
+        throw new Error('Database error. See server log for details.');
+    }
+};
+
+const getUserByUsername = async ({ username }: { username: string }): Promise<User | null> => {
+    try {
+        const userPrisma = await database.user.findFirst({
+            where: { username },
+            include: {
+                profile: true,
+                recipes: {
+                    include: {
+                        ingredients: true,
+                    },
+                },
+                schedule: {
+                    include: {
+                        recipes: {
+                            include: {
+                                ingredients: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        return userPrisma ? User.from({ ...userPrisma, role: userPrisma.role as Role }) : null;
+    } catch (error) {
+        console.error(error);
+        throw new Error('Database error. See server log for details.');
+    }
+};
+
+const getUserByEmail = async ({ email }: { email: string }): Promise<User | null> => {
+    try {
+        const userPrisma = await database.user.findFirst({
+            where: { profile: { email } },
+            include: {
+                profile: true,
+                recipes: {
+                    include: {
+                        ingredients: true,
+                    },
+                },
+                schedule: {
+                    include: {
+                        recipes: {
+                            include: {
+                                ingredients: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        return userPrisma ? User.from({ ...userPrisma, role: userPrisma.role as Role }) : null;
+    } catch (error) {
+        console.error(error);
+        throw new Error('Database error. See server log for details.');
+    }
+};
+
+const addUser = async (user: User): Promise<User> => {
+    try {
+        const userPrisma = await database.user.create({
+            data: {
+                username: user.getUsername(),
+                password: user.getPassword(),
+                role: user.getRole(),
+                profile: {
+                    create: {
+                        firstName: user.getProfile()?.getFirstName() ?? '',
+                        lastName: user.getProfile()?.getLastName() ?? '',
+                        email: user.getProfile()?.getEmail() ?? '',
+                    },
+                },
+                schedule: {
+                    create: {
+                        createdAt: new Date(),
+                    },
+                },
+            },
+            include: {
+                profile: true,
+                recipes: {
+                    include: {
+                        ingredients: true,
+                    },
+                },
+                schedule: {
+                    include: {
+                        recipes: {
+                            include: {
+                                ingredients: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        const createdUser = User.from({ ...userPrisma, role: userPrisma.role as Role });
+
+        // create schedule instance and set it for user
+        if (userPrisma.schedule) {
+            const newSchedule = Schedule.from(userPrisma.schedule);
+            createdUser.setSchedule(newSchedule);
+        }
+
+        return createdUser;
+    } catch (error) {
+        console.error('Error adding user:', error);
+        throw new Error('Database error. See server log for details.');
+    }
 };
 
 export default {
     getAllUsers,
     getUserById,
+    getUserByUsername,
     addUser,
+    getUserByEmail,
 };
