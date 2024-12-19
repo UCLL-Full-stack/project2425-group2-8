@@ -79,16 +79,6 @@ recipeRouter.get('/:recipeId', async (req: Request, res: Response, next: NextFun
     }
 });
 
-recipeRouter.post('/ingredients', async (req: Request, res: Response, next: NextFunction) => {
-    const { recipeIds } = req.body;
-    try {
-        const ingredients = await recipeService.getIngredientsForRecipes(recipeIds);
-        res.status(200).json(ingredients);
-    } catch (error) {
-        next(error);
-    }
-});
-
 /**
  * @swagger
  * /recipes/{recipeId}:

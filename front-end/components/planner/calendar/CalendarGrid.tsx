@@ -152,6 +152,7 @@ const CalendarGrid: React.FC<Props> = ({ setShoppingListIngredients }) => {
     }
   };
 
+  // fetch ingredients for selected meals
   const handleAddToShoppingList = async () => {
     if (selectedDates.length === 0) {
       return;
@@ -159,18 +160,25 @@ const CalendarGrid: React.FC<Props> = ({ setShoppingListIngredients }) => {
 
     const recipeIds = selectedDates.flatMap(
       (date) =>
-        recipesByDate[formatDateUTC(date)]?.map((recipe) => recipe.id) || []
+        recipesByDate[formatDateUTC(date)]?.map((recipe) => recipe.recipeId) ||
+        []
     );
     if (recipeIds.length === 0) {
       return;
     }
 
     try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("No authorization token found in localStorage");
+        return;
+      }
+
       const ingredients = await PlannerService.fetchIngredientsForRecipes(
         recipeIds
       );
 
-      // send ingredients to the shopping list sidebar component
+      // send ingredients to shopping list sidebar component
       setShoppingListIngredients(ingredients);
     } catch (error) {
       console.error("Error fetching ingredients:", error);

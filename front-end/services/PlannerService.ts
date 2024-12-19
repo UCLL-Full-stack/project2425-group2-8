@@ -3,7 +3,6 @@ import { Ingredient } from "@/types/recipes";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const fetchMealDetails = async (date: string, token: string) => {
-  console.log(`Fetching meal details for date: ${date} with token: ${token}`);
   const response = await fetch(`${apiUrl}/schedules?date=${date}`, {
     method: "GET",
     headers: {
@@ -12,30 +11,36 @@ const fetchMealDetails = async (date: string, token: string) => {
     },
   });
 
-  console.log(`Response status: ${response.status}`);
   if (!response.ok) {
-    console.error("Failed to fetch meal details", await response.text());
     throw new Error("Failed to fetch meal details");
   }
 
   const data = await response.json();
-  console.log("Fetched meal details:", data);
   return data;
 };
 
 const fetchIngredientsForRecipes = async (
   recipeIds: number[]
 ): Promise<Ingredient[]> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    console.error("No authorization token found in localStorage");
+    throw new Error("No authorization token found");
+  }
+
   try {
     const response = await fetch(`${apiUrl}/recipes/ingredients`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ recipeIds }),
     });
 
     if (!response.ok) {
+      console.error("Failed to fetch ingredients, status:", response.status);
       throw new Error("Failed to fetch ingredients");
     }
 

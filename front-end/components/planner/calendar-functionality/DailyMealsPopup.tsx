@@ -124,7 +124,7 @@ const DailyMealsPopup: React.FC<Props> = ({ userId, date, onClose }) => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {allMeals.map((meal) => (
-                <div key={meal.id} className="space-y-2">
+                <div key={meal.recipeId} className="space-y-2">
                   <h3 className="text-lg font-semibold capitalize">
                     {formatCategoryName(meal.category)}
                   </h3>

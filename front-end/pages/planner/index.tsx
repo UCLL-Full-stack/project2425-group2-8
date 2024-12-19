@@ -1,9 +1,13 @@
 import CalendarGrid from "@/components/planner/calendar/CalendarGrid";
 import Greeting from "@/components/planner/Greeting";
-import ShoppingList from "@/components/planner/ShoppingListSidebar";
+import ShoppingListSidebar from "@/components/planner/ShoppingListSidebar";
+import { Ingredient } from "@/types/recipes";
 import { useEffect, useState } from "react";
 
 const MealPlanner: React.FC = () => {
+  const [shoppingListIngredients, setShoppingListIngredients] = useState<
+    Ingredient[]
+  >([]);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
