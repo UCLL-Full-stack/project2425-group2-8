@@ -1,5 +1,7 @@
 import { UnauthorizedError } from 'express-jwt';
 import { Recipe } from '../model/recipe';
+import { RecipeIngredient } from '../model/recipeIngredient';
+import { Ingredient } from '../model/ingredient';
 import recipeDb from '../repository/recipe.db';
 import { RecipeUpdateInput, Role } from '../types';
 import userDb from '../repository/user.db';

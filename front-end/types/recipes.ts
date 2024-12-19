@@ -5,17 +5,20 @@ type Ingredient = {
   quantity: number;
   unit: string;
   store?: string;
+  checked?: boolean;
+  recipes: Recipe[];
 };
 
 type RecipeIngredient = {
   ingredient: Ingredient;
   unit: string;
   quantity: number;
+  checked?: boolean;
 };
 
 type Recipe = {
-  id: number;
-  title: string;
+  recipeId: number;
+  recipeTitle: string;
   instructions: string;
   cookingTime: number;
   category: RecipeCategory;

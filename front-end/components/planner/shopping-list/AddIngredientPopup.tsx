@@ -37,9 +37,10 @@ const defaultIngredient: Ingredient = {
   category: IngredientCategory.Other,
   quantity: 1,
   unit: "g",
+  recipes: [],
 };
 
-export function AddIngredientDialog() {
+const AddIngredientDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [ingredient, setIngredient] = useState<Ingredient>(defaultIngredient);
   const overlayRef = useRef<HTMLDivElement>(null); // this will change
@@ -232,4 +233,6 @@ export function AddIngredientDialog() {
       )}
     </>
   );
-}
+};
+
+export default AddIngredientDialog;

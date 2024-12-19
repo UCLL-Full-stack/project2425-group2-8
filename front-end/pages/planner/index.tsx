@@ -1,9 +1,13 @@
 import CalendarGrid from "@/components/planner/calendar/CalendarGrid";
 import Greeting from "@/components/planner/Greeting";
-import ShoppingList from "@/components/planner/ShoppingListSidebar";
+import ShoppingListSidebar from "@/components/planner/ShoppingListSidebar";
+import { Ingredient } from "@/types/recipes";
 import { useEffect, useState } from "react";
 
 const MealPlanner: React.FC = () => {
+  const [shoppingListIngredients, setShoppingListIngredients] = useState<
+    Ingredient[]
+  >([]);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -28,13 +32,15 @@ const MealPlanner: React.FC = () => {
           <section className="p-6">
             <Greeting user={user} />
             <h1 className="text-2xl font-bold mb-3">Meal Planner</h1>
-            <CalendarGrid />
+            <CalendarGrid
+              setShoppingListIngredients={setShoppingListIngredients}
+            />
           </section>
         </section>
 
         {/* Shopping List Sidebar */}
         <section className="w-80 flex-shrink-0">
-          <ShoppingList />
+          <ShoppingListSidebar ingredients={shoppingListIngredients} />
         </section>
       </main>
     </>
