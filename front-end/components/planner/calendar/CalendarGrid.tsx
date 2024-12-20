@@ -6,21 +6,42 @@ import CalendarDay from "./CalendarDay";
 import DailyMealsPopup from "../calendar-functionality/DailyMealsPopup";
 import { Recipe } from "@/types/recipes";
 import { useTranslation } from "next-i18next";
+import AddNewMealPopup from "../calendar-functionality/AddNewMealPopup";
 
 const CalendarGrid: React.FC = () => {
   const { t } = useTranslation("common");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"month" | "week">("month"); // to implement
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectionModeActive, setSelectionModeActive] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [showRecipePopup, setShowRecipePopup] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isAddNewMealOpen, setIsAddNewMealOpen] = useState(false);
   const [recipesByDate, setRecipesByDate] = useState<Record<string, Recipe[]>>(
     {}
   );
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const handleAddNewMeal = () => {
+    setIsAddNewMealOpen(true);
+  };
+
+  const handleSaveNewMeal = async (recipe: Omit<Recipe, "id">) => {
+    const userToken = localStorage.getItem("token");
+    if (userToken) {
+      try {
+        const dateString = formatDateUTC(currentDate);
+        await PlannerService.saveNewMeal(recipe, dateString, userToken);
+        await fetchMonthRecipes();
+        setIsAddNewMealOpen(false);
+      } catch (error) {
+        console.error("Error saving new meal:", error);
+      }
+    } else {
+      console.error("No token found in local storage");
+    }
+  };
 
   // To fix issues with dates
   const toUTCDate = (date: Date) => {
@@ -188,15 +209,14 @@ const CalendarGrid: React.FC = () => {
       <CardContent className="p-6 w-full">
         <CalendarHeader
           currentDate={currentDate}
-          viewMode={viewMode}
           selectionModeActive={selectionModeActive}
           selectedDatesCount={selectedDates.length}
           onChangeMonth={changeMonth}
           onToggleSelectionMode={toggleSelectionMode}
-          onChangeViewMode={setViewMode}
           onDeleteMeals={handleDeleteMeals}
           onAddToShoppingList={handleAddToShoppingList}
           onToday={handleGoToToday}
+          onAddNewMeal={handleAddNewMeal}
         />
 
         <section className="grid grid-cols-7 gap-2 w-full">
@@ -242,6 +262,12 @@ const CalendarGrid: React.FC = () => {
           onClose={() => setShowRecipePopup(false)}
         />
       )}
+      <AddNewMealPopup
+        isOpen={isAddNewMealOpen}
+        onClose={() => setIsAddNewMealOpen(false)}
+        onSave={handleSaveNewMeal}
+        date={currentDate}
+      />
     </Card>
   );
 };

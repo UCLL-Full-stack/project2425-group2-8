@@ -104,9 +104,7 @@ const AddNewMealPopup: React.FC<Props> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-full overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Add New Meal for {date.toLocaleDateString()}
-          </DialogTitle>
+          <DialogTitle>Add New Meal</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <Label htmlFor="title">Title</Label>

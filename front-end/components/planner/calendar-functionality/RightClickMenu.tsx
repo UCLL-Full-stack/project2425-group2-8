@@ -32,10 +32,6 @@ const RightClickMenu: React.FC<Props> = ({
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={onAddNewMeal}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("addNewMeal")}
-        </ContextMenuItem>
         <ContextMenuItem onClick={onAddExistingMeal}>
           <Heart className="mr-2 h-4 w-4" />
           Add Existing Meal
