@@ -37,52 +37,83 @@ const AuthToggle = () => {
   };
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader className="relative">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl">Plateful</CardTitle>
-            <CardDescription>
-              {isLogin ? t("welcomeBack") : t("createNewAccount")}
-            </CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-12">
+      <Card className="w-[350px]">
+        <CardHeader className="relative">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-2xl">Plateful</CardTitle>
+              <CardDescription>
+                {isLogin ? t("welcomeBack") : t("createNewAccount")}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleLanguageChange}
+                className="w-6 h-6 rounded-full"
+                aria-label="Change Language"
+              >
+                <Globe size={24} />
+              </button>
+              <span>{router.locale === "en" ? "中文" : "EN"}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handleLanguageChange}
-              className="w-6 h-6 rounded-full"
-              aria-label="Change Language"
-            >
-              <Globe size={24} />
-            </button>
-            <span>{router.locale === "en" ? "中文" : "EN"}</span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs
-          defaultValue="login"
-          className="w-full"
-          onValueChange={handleTabChange}
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">{t("login")}</TabsTrigger>
-            <TabsTrigger value="register">{t("register")}</TabsTrigger>
-          </TabsList>
-          <div
-            className={`mt-4 transition-opacity duration-300 ${
-              isPending ? "opacity-50" : "opacity-100"
-            }`}
+        </CardHeader>
+        <CardContent>
+          <Tabs
+            defaultValue="login"
+            className="w-full"
+            onValueChange={handleTabChange}
           >
-            <TabsContent value="login">
-              <LoginForm onSuccess={handleSuccess} />
-            </TabsContent>
-            <TabsContent value="register">
-              <SignupForm onSuccess={handleSuccess} />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">{t("login")}</TabsTrigger>
+              <TabsTrigger value="register">{t("register")}</TabsTrigger>
+            </TabsList>
+            <div
+              className={`mt-4 transition-opacity duration-300 ${
+                isPending ? "opacity-50" : "opacity-100"
+              }`}
+            >
+              <TabsContent value="login">
+                <LoginForm onSuccess={handleSuccess} />
+              </TabsContent>
+              <TabsContent value="register">
+                <SignupForm onSuccess={handleSuccess} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <div className="w-full max-w-2xl mt-6">
+        <table className="min-w-full bg-white mx-auto">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 border-b">Username</th>
+              <th className="py-2 px-4 border-b">Password</th>
+              <th className="py-2 px-4 border-b">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="py-2 px-4 border-b">annie</td>
+              <td className="py-2 px-4 border-b">@NNie123</td>
+              <td className="py-2 px-4 border-b">admin</td>
+            </tr>
+            <tr>
+              <td className="py-2 px-4 border-b">shulin</td>
+              <td className="py-2 px-4 border-b">Shul!n123</td>
+              <td className="py-2 px-4 border-b">user</td>
+            </tr>
+            <tr>
+              <td className="py-2 px-4 border-b">Amelie</td>
+              <td className="py-2 px-4 border-b">h0tchOcol@te101</td>
+              <td className="py-2 px-4 border-b">guest</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 
