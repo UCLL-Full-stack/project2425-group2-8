@@ -4,7 +4,7 @@ import { Recipe } from '../../model/recipe';
 import { Schedule } from '../../model/schedule';
 import { Ingredient } from '../../model/ingredient';
 import { RecipeIngredient } from '../../model/recipeIngredient';
-import { IngredientCategory } from '../../types';
+import { IngredientCategory, Role, RecipeCategory } from '../../types'; 
 
 const profile = new Profile({
     id: 1,
@@ -18,16 +18,18 @@ const user = new User({
     username: 'testuser',
     password: 'password',
     profile: profile,
+    role: 'user' as Role,
 });
 
 const ingredient = new Ingredient({
     id: 1,
     name: 'Flour',
-    category: 'Pantry' as IngredientCategory,
+    category: 'PANTRY' as IngredientCategory,
 });
 
 const recipeIngredient = new RecipeIngredient({
-    recipe: {} as Recipe, // Placeholder, will be set later
+    recipeId: 1, 
+    ingredientId: ingredient.getId()!,
     ingredient: ingredient,
     unit: 'cups',
     quantity: 2,
@@ -38,14 +40,12 @@ const recipe = new Recipe({
     title: 'Pancakes',
     instructions: 'Mix ingredients and cook.',
     cookingTime: 15,
-    category: 'breakfast',
+    category: 'BREAKFAST' as RecipeCategory, 
     ingredients: [recipeIngredient],
-    user: user,
 });
 
 const schedule = new Schedule({
     id: 1,
-    user: user,
     date: new Date(),
     recipes: [recipe],
 });
@@ -56,7 +56,7 @@ test('given: valid user details, when: user is created, then: user is created wi
     expect(user.getPassword()).toBe('password');
     expect(user.getProfile()).toBe(profile);
     expect(user.getRecipes()).toEqual([]);
-    expect(user.getSchedule()).toBeUndefined();
+    expect(user.getSchedule()).toBeNull();
 });
 
 test('given: missing username, when: user is created, then: error is thrown', () => {
@@ -66,6 +66,7 @@ test('given: missing username, when: user is created, then: error is thrown', ()
             username: '',
             password: 'password',
             profile: profile,
+            role: 'user' as Role,
         });
     }).toThrow('Username is required and cannot be empty');
 });
@@ -77,19 +78,21 @@ test('given: missing password, when: user is created, then: error is thrown', ()
             username: 'testuser',
             password: '',
             profile: profile,
+            role: 'user' as Role,
         });
     }).toThrow('Password is required and cannot be empty');
 });
 
-test('given: missing profile, when: user is created, then: error is thrown', () => {
+test('given: missing role, when: user is created, then: error is thrown', () => {
     expect(() => {
         new User({
             id: 1,
             username: 'testuser',
             password: 'password',
-            profile: undefined as unknown as Profile,
+            profile: profile,
+            role: undefined as unknown as Role, // Simulate missing role
         });
-    }).toThrow('Profile is required');
+    }).toThrow('Role is required');
 });
 
 test('given: a recipe, when: recipe is added to user, then: user has the recipe', () => {
@@ -108,6 +111,7 @@ test('given: two users with same details, when: compared, then: they are equal',
         username: 'testuser',
         password: 'password',
         profile: profile,
+        role: 'user' as Role,
     });
 
     expect(user.equals(anotherUser)).toBe(true);
@@ -119,6 +123,7 @@ test('given: two users with different details, when: compared, then: they are no
         username: 'differentuser',
         password: 'differentpassword',
         profile: profile,
+        role: 'user' as Role,
     });
 
     expect(user.equals(anotherUser)).toBe(false);

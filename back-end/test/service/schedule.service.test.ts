@@ -1,193 +1,121 @@
-import { Ingredient } from '../../model/ingredient';
+import scheduleService from '../../service/schedule.service';
+import scheduleDb from '../../repository/schedule.db';
+import recipeDb from '../../repository/recipe.db';
 import { Recipe } from '../../model/recipe';
 import { RecipeIngredient } from '../../model/recipeIngredient';
-import { Schedule } from '../../model/schedule';
-import scheduleDb from '../../repository/schedule.db';
-import scheduleService from '../../service/schedule.service';
-import { User } from '../../model/user';
-import { Profile } from '../../model/profile';
+import { Ingredient } from '../../model/ingredient';
+import { UnauthorizedError } from 'express-jwt';
+import { Role, IngredientCategory } from '../../types';
 
 jest.mock('../../repository/schedule.db');
+jest.mock('../../repository/recipe.db');
 
-// Mock data
-const user1 = new User({
+const ingredient = new Ingredient({
     id: 1,
-    username: 'annie',
-    password: '@nnie1234',
-    profile: new Profile({
-        id: 1,
-        firstName: 'Anette',
-        lastName: 'Hardy',
-        email: 'annie@ucll.be',
-    }),
+    name: 'Flour',
+    category: 'PANTRY' as IngredientCategory,
 });
 
-const ingredient1 = new Ingredient({ id: 1, name: 'Spaghetti', category: 'Pantry' });
-const ingredient2 = new Ingredient({ id: 2, name: 'Tomato Sauce', category: 'Pantry' });
-
-const recipe1 = new Recipe({
-    id: 1,
-    title: 'Spaghetti Bolognese',
-    instructions: 'Cook pasta, Prepare sauce, Mix together',
-    cookingTime: 30,
-    category: 'dinner',
-    ingredients: [
-        new RecipeIngredient({
-            recipe: {} as Recipe,
-            ingredient: ingredient1,
-            unit: 'g',
-            quantity: 200,
-        }),
-        new RecipeIngredient({
-            recipe: {} as Recipe,
-            ingredient: ingredient2,
-            unit: 'ml',
-            quantity: 150,
-        }),
-    ],
-    user: user1,
-    imageUrl: 'https://images.unsplash.com/photo-url',
-    isFavorite: true,
+const recipeIngredient = new RecipeIngredient({
+    recipeId: 1,
+    ingredientId: ingredient.getId()!,
+    ingredient: ingredient,
+    unit: 'cups',
+    quantity: 2,
 });
 
-const schedule = new Schedule({
+const mockRecipe = new Recipe({
     id: 1,
-    user: user1,
-    date: new Date('2024-11-03'),
-    recipes: [recipe1],
+    title: 'Pancakes',
+    instructions: 'Mix ingredients and cook.',
+    cookingTime: 15,
+    category: 'BREAKFAST',
+    ingredients: [recipeIngredient],
 });
 
-const userId = user1.getId() ?? 0;
-const date = schedule.getDate();
-const newDate = new Date('2024-11-04');
-const recipe = recipe1;
-
-// Mock functions
-let mockScheduleDbGetScheduleByUserIdAndDate: jest.Mock;
-let mockScheduleDbCreateSchedule: jest.Mock;
-let mockScheduleDbSaveSchedule: jest.Mock;
+const mockSchedule = {
+    getId: jest.fn().mockReturnValue(1),
+    getRecipes: jest.fn().mockReturnValue([mockRecipe]),
+    addRecipe: jest.fn(),
+    removeRecipe: jest.fn(),
+};
 
 beforeEach(() => {
-    mockScheduleDbGetScheduleByUserIdAndDate = jest.fn();
-    mockScheduleDbCreateSchedule = jest.fn();
-    mockScheduleDbSaveSchedule = jest.fn();
-
-    scheduleDb.getScheduleByUserIdAndDate = mockScheduleDbGetScheduleByUserIdAndDate;
-    scheduleDb.createSchedule = mockScheduleDbCreateSchedule;
-    scheduleDb.saveSchedule = mockScheduleDbSaveSchedule;
-
     jest.clearAllMocks();
 });
 
-afterEach(() => {
-    jest.clearAllMocks();
+test('given: valid userId and date, when: getScheduledRecipeDetails is called, then: it returns scheduled recipes', async () => {
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
+
+    const recipes = await scheduleService.getScheduledRecipeDetails(1, new Date());
+
+    expect(recipes).toEqual([mockRecipe]);
+    expect(scheduleDb.getScheduledRecipesByUserIdAndDate).toHaveBeenCalledWith(1, expect.any(Date));
 });
 
-// function for tests expecting errors
-function expectError(callback: () => Promise<unknown>, errorMsg: string) {
-    expect(callback).rejects.toThrow(errorMsg);
-}
-
-test('given a schedule exists, when getScheduledRecipeDetails is called, then recipes for that date are returned', () => {
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValue(schedule);
-
-    const recipes = scheduleService.getScheduledRecipeDetails(userId, date);
-
-    expect(recipes).toEqual(schedule.getRecipes());
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledTimes(1);
+test('given: guest role, when: updateRecipeDate is called, then: it throws UnauthorizedError', async () => {
+    await expect(
+        scheduleService.updateRecipeDate(1, 1, new Date(), new Date(), 'guest' as Role)
+    ).rejects.toThrow(UnauthorizedError);
 });
 
-test('given no schedule exists, when getScheduledRecipeDetails is called, then an empty array is returned', () => {
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValue(null);
+test('given: valid details, when: updateRecipeDate is called, then: it updates the recipe date', async () => {
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
+    (scheduleDb.createSchedule as jest.Mock).mockResolvedValue(mockSchedule);
+    (scheduleDb.saveSchedule as jest.Mock).mockResolvedValue(undefined);
 
-    const recipes = scheduleService.getScheduledRecipeDetails(userId, date);
+    const recipe = await scheduleService.updateRecipeDate(1, 1, new Date(), new Date(), 'user' as Role);
 
-    expect(recipes).toEqual([]);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledTimes(1);
+    expect(recipe).toEqual(mockRecipe);
+    expect(scheduleDb.removeScheduledRecipe).toHaveBeenCalledWith(1, 1);
+    expect(scheduleDb.saveSchedule).toHaveBeenCalledTimes(2);
 });
 
-test('given a valid update, when updateRecipeDate is called, then recipe is moved to new date and saved', async () => {
-    const newSchedule = new Schedule({ id: 2, user: user1, date: newDate, recipes: [] });
-
-    mockScheduleDbGetScheduleByUserIdAndDate.mockImplementation((uid, d) =>
-        d.getTime() === date.getTime() ? schedule : newSchedule
-    );
-    mockScheduleDbCreateSchedule.mockReturnValue(newSchedule);
-
-    const updatedRecipe = await scheduleService.updateRecipeDate(
-        userId,
-        recipe.getId()!,
-        date,
-        newDate
-    );
-
-    expect(updatedRecipe).toBe(recipe);
-    expect(schedule.getRecipes()).not.toContain(recipe);
-    expect(newSchedule.getRecipes()).toContain(recipe);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, newDate);
-    expect(mockScheduleDbSaveSchedule).toHaveBeenCalledTimes(2);
+test('given: guest role, when: deleteScheduledRecipe is called, then: it throws UnauthorizedError', async () => {
+    await expect(
+        scheduleService.deleteScheduledRecipe(1, 1, new Date(), 'guest' as Role)
+    ).rejects.toThrow(UnauthorizedError);
 });
 
-test('given no existing schedule for the old date, when updateRecipeDate is called, then an error is thrown', async () => {
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValueOnce(null);
+test('given: valid details, when: deleteScheduledRecipe is called, then: it deletes the scheduled recipe', async () => {
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
+    (recipeDb.saveRecipe as jest.Mock).mockResolvedValue(undefined);
 
-    await expectError(
-        () => scheduleService.updateRecipeDate(userId, recipe.getId()!, date, newDate),
-        'Schedule not found'
-    );
+    await scheduleService.deleteScheduledRecipe(1, 1, new Date(), 'user' as Role);
 
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbSaveSchedule).not.toHaveBeenCalled();
+    expect(scheduleDb.removeScheduledRecipe).toHaveBeenCalledWith(1, 1);
+    expect(recipeDb.saveRecipe).toHaveBeenCalled();
 });
 
-test('given recipe does not exist on old date, when updateRecipeDate is called, then an error is thrown', async () => {
-    schedule.removeRecipe(recipe);
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValueOnce(schedule);
+test('given: valid userId and date, when: copyMeals is called, then: it returns copied meals', async () => {
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
 
-    await expectError(
-        () => scheduleService.updateRecipeDate(userId, recipe.getId()!, date, newDate),
-        'Recipe not found'
-    );
+    const recipes = await scheduleService.copyMeals(1, new Date());
 
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbSaveSchedule).not.toHaveBeenCalled();
+    expect(recipes).toEqual([mockRecipe]);
+    expect(scheduleDb.getScheduledRecipesByUserIdAndDate).toHaveBeenCalledWith(1, new Date());
 });
 
-test('given a recipe exists, when deleteScheduledRecipe is called, then recipe is removed and schedule is saved', async () => {
-    schedule.addRecipe(recipe);
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValue(schedule);
+test('given: valid details, when: pasteMeals is called, then: it pastes the meals', async () => {
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
+    (scheduleDb.createSchedule as jest.Mock).mockResolvedValue(mockSchedule);
+    (scheduleDb.saveSchedule as jest.Mock).mockResolvedValue(undefined);
 
-    await scheduleService.deleteScheduledRecipe(userId, recipe.getId()!, date);
+    const recipes = await scheduleService.pasteMeals(1, new Date(), new Date());
 
-    expect(schedule.getRecipes()).not.toContain(recipe);
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbSaveSchedule).toHaveBeenCalledWith(schedule);
+    expect(recipes).toEqual([mockRecipe]);
+    expect(scheduleDb.saveSchedule).toHaveBeenCalled();
 });
 
-test('given no schedule exists, when deleteScheduledRecipe is called, then an error is thrown', async () => {
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValueOnce(null);
+test('given: valid details, when: scheduleRecipe is called, then: it schedules the recipe', async () => {
+    (recipeDb.getRecipeById as jest.Mock).mockResolvedValue(mockRecipe);
+    (scheduleDb.getScheduledRecipesByUserIdAndDate as jest.Mock).mockResolvedValue(mockSchedule);
+    (scheduleDb.saveSchedule as jest.Mock).mockResolvedValue(undefined);
+    (recipeDb.saveRecipe as jest.Mock).mockResolvedValue(undefined);
 
-    await expectError(
-        () => scheduleService.deleteScheduledRecipe(userId, recipe.getId()!, date),
-        'Schedule not found'
-    );
+    const recipe = await scheduleService.scheduleRecipe(1, 1, new Date());
 
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbSaveSchedule).not.toHaveBeenCalled();
-});
-
-test('given a recipe does not exist in schedule, when deleteScheduledRecipe is called, then an error is thrown', async () => {
-    schedule.removeRecipe(recipe);
-    mockScheduleDbGetScheduleByUserIdAndDate.mockReturnValue(schedule);
-
-    await expectError(
-        () => scheduleService.deleteScheduledRecipe(userId, recipe.getId()!, date),
-        'Recipe not found in schedule'
-    );
-
-    expect(mockScheduleDbGetScheduleByUserIdAndDate).toHaveBeenCalledWith(userId, date);
-    expect(mockScheduleDbSaveSchedule).not.toHaveBeenCalled();
+    expect(recipe).toEqual(mockRecipe);
+    expect(scheduleDb.saveSchedule).toHaveBeenCalled();
+    expect(recipeDb.saveRecipe).toHaveBeenCalled();
 });

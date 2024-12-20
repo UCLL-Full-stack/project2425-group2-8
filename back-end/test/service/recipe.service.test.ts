@@ -1,165 +1,172 @@
 import recipeService from '../../service/recipe.service';
 import recipeDb from '../../repository/recipe.db';
+import userDb from '../../repository/user.db';
 import { Recipe } from '../../model/recipe';
-import { RecipeUpdateInput } from '../../types';
 import { RecipeIngredient } from '../../model/recipeIngredient';
 import { Ingredient } from '../../model/ingredient';
-import { User } from '../../model/user';
-import { Profile } from '../../model/profile';
+import { UnauthorizedError } from 'express-jwt';
+import { RecipeUpdateInput, Role, NewRecipeInput, IngredientCategory, RecipeCategory } from '../../types';
 
 jest.mock('../../repository/recipe.db');
+jest.mock('../../repository/user.db');
 
-// Mock data
-const user1 = new User({
+const ingredient = new Ingredient({
     id: 1,
-    username: 'annie',
-    password: '@nnie1234',
-    profile: new Profile({
-        id: 1,
-        firstName: 'Anette',
-        lastName: 'Hardy',
-        email: 'annie@ucll.be',
-    }),
+    name: 'Flour',
+    category: 'PANTRY' as IngredientCategory,
 });
 
-const ingredient1 = new Ingredient({ id: 1, name: 'Spaghetti', category: 'Pantry' });
-const ingredient2 = new Ingredient({ id: 2, name: 'Tomato Sauce', category: 'Pantry' });
-
-const recipe1Ingredients = [
-    new RecipeIngredient({
-        recipe: {} as Recipe,
-        ingredient: ingredient1,
-        unit: 'g',
-        quantity: 200,
-    }),
-    new RecipeIngredient({
-        recipe: {} as Recipe,
-        ingredient: ingredient2,
-        unit: 'ml',
-        quantity: 150,
-    }),
-];
+const recipeIngredient = new RecipeIngredient({
+    recipeId: 1,
+    ingredientId: ingredient.getId()!,
+    ingredient: ingredient,
+    unit: 'cups',
+    quantity: 2,
+});
 
 const mockRecipe = new Recipe({
     id: 1,
-    title: 'Spaghetti Bolognese',
-    instructions: 'Cook pasta, Prepare sauce, Mix together',
-    cookingTime: 30,
-    category: 'dinner',
-    ingredients: recipe1Ingredients,
-    user: user1,
-    imageUrl: 'https://images.unsplash.com/photo-url',
-    isFavorite: true,
+    title: 'Pancakes',
+    instructions: 'Mix ingredients and cook.',
+    cookingTime: 15,
+    category: 'BREAKFAST',
+    ingredients: [recipeIngredient],
 });
-mockRecipe.updateRecipe = jest.fn();
 
-// mock functions
-let mockRecipeDbGetAllRecipes: jest.Mock;
-let mockRecipeDbGetRecipeById: jest.Mock;
-let mockRecipeDbSaveRecipe: jest.Mock;
-let mockRecipeDbDeleteRecipe: jest.Mock;
+const mockUser = {
+    getId: jest.fn().mockReturnValue(1),
+    hasRecipe: jest.fn().mockReturnValue(true),
+};
 
 beforeEach(() => {
-    mockRecipeDbGetAllRecipes = jest.fn().mockReturnValue([mockRecipe]);
-    mockRecipeDbGetRecipeById = jest.fn().mockReturnValue(mockRecipe);
-    mockRecipeDbSaveRecipe = jest.fn();
-    mockRecipeDbDeleteRecipe = jest.fn();
-
-    recipeDb.getAllRecipes = mockRecipeDbGetAllRecipes;
-    recipeDb.getRecipeById = mockRecipeDbGetRecipeById;
-    recipeDb.saveRecipe = mockRecipeDbSaveRecipe;
-    recipeDb.deleteRecipe = mockRecipeDbDeleteRecipe;
-
     jest.clearAllMocks();
 });
 
-afterEach(() => {
-    jest.clearAllMocks();
-});
+test('given: valid userId, when: getRecipesByUserId is called, then: it returns recipes', async () => {
+    (recipeDb.getRecipesByUserId as jest.Mock).mockResolvedValue([mockRecipe]);
 
-// function for tests that expect errors
-function expectError(callback: () => void, errorMsg: string) {
-    expect(callback).toThrow(errorMsg);
-}
-
-test('given recipes exist, when getAllRecipes is called, then all recipes are returned', () => {
-    const recipes = recipeService.getAllRecipes();
+    const recipes = await recipeService.getRecipesByUserId(1);
 
     expect(recipes).toEqual([mockRecipe]);
-    expect(mockRecipeDbGetAllRecipes).toHaveBeenCalledTimes(1);
+    expect(recipeDb.getRecipesByUserId).toHaveBeenCalledWith(1);
 });
 
-test('given a recipe exists, when getRecipeById is called, then the recipe is returned', () => {
-    const recipe = recipeService.getRecipeById(1);
+test('given: valid recipe id, when: getRecipeById is called, then: it returns the recipe', async () => {
+    (recipeDb.getRecipeById as jest.Mock).mockResolvedValue(mockRecipe);
+
+    const recipe = await recipeService.getRecipeById(1);
 
     expect(recipe).toEqual(mockRecipe);
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledTimes(1);
+    expect(recipeDb.getRecipeById).toHaveBeenCalledWith({ id: 1 });
 });
 
-test('given a recipe does not exist, when getRecipeById is called, then an error is thrown', () => {
-    mockRecipeDbGetRecipeById.mockReturnValueOnce(null);
+test('given: guest role, when: updateRecipe is called, then: it throws UnauthorizedError', async () => {
+    const recipeData: RecipeUpdateInput = {
+        title: 'New Title',
+        instructions: 'Updated instructions',
+        cookingTime: 20,
+        category: 'BREAKFAST',
+        ingredients: [
+            {
+                ingredient: ingredient,
+                unit: 'cups',
+                quantity: 2,
+            },
+        ],
+    };
 
-    expectError(() => recipeService.getRecipeById(1), 'Recipe with id 1 does not exist.');
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledTimes(1);
+    await expect(
+        recipeService.updateRecipe(1, recipeData, 1, 'guest' as Role)
+    ).rejects.toThrow(UnauthorizedError);
 });
 
-test('given a recipe exists, when updateRecipe is called with valid data, then the recipe is updated and returned', () => {
-    const recipeData: RecipeUpdateInput = { title: 'Updated Pasta' };
+test('given: valid details, when: updateRecipe is called, then: it updates the recipe', async () => {
+    const recipeData: RecipeUpdateInput = {
+        title: 'New Title',
+        instructions: 'Updated instructions',
+        cookingTime: 20,
+        category: 'BREAKFAST',
+        ingredients: [
+            {
+                ingredient: ingredient,
+                unit: 'cups',
+                quantity: 2,
+            },
+        ],
+    };
 
-    const updatedRecipe = recipeService.updateRecipe(1, recipeData);
+    (recipeDb.getRecipeById as jest.Mock).mockResolvedValue(mockRecipe);
+    (userDb.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (recipeDb.saveRecipe as jest.Mock).mockResolvedValue(undefined);
 
-    expect(mockRecipe.updateRecipe).toHaveBeenCalledWith(recipeData);
-    expect(mockRecipeDbSaveRecipe).toHaveBeenCalledWith(mockRecipe);
-    expect(updatedRecipe).toEqual(mockRecipe);
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledTimes(1);
+    const recipe = await recipeService.updateRecipe(1, recipeData, 1, 'user' as Role);
+
+    expect(recipe).toEqual(mockRecipe);
+    expect(recipeDb.saveRecipe).toHaveBeenCalled();
 });
 
-test('given invalid or partial data, when updateRecipe is called, then the recipe is handled appropriately', () => {
-    const invalidData: RecipeUpdateInput = { title: '' };
-    const partialData: RecipeUpdateInput = { cookingTime: 45 };
-
-    // Invalid data
-    expectError(() => recipeService.updateRecipe(1, invalidData), 'Invalid title');
-    expect(mockRecipe.updateRecipe).not.toHaveBeenCalled();
-    expect(mockRecipeDbSaveRecipe).not.toHaveBeenCalled();
-
-    // Partial data
-    const updatedRecipe = recipeService.updateRecipe(1, partialData);
-    expect(mockRecipe.updateRecipe).toHaveBeenCalledWith(partialData);
-    expect(mockRecipeDbSaveRecipe).toHaveBeenCalledWith(mockRecipe);
-    expect(updatedRecipe).toEqual(mockRecipe);
+test('given: guest role, when: deleteRecipe is called, then: it throws UnauthorizedError', async () => {
+    await expect(recipeService.deleteRecipe(1, 1, 'guest' as Role)).rejects.toThrow(UnauthorizedError);
 });
 
-test('given a recipe exists, when deleteRecipe is called, then the recipe is deleted', () => {
-    recipeService.deleteRecipe(1);
+test('given: valid details, when: deleteRecipe is called, then: it deletes the recipe', async () => {
+    (recipeDb.getRecipeById as jest.Mock).mockResolvedValue(mockRecipe);
+    (userDb.getUserById as jest.Mock).mockResolvedValue(mockUser);
 
-    expect(mockRecipeDbDeleteRecipe).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledTimes(1);
+    await recipeService.deleteRecipe(1, 1, 'user' as Role);
+
+    expect(recipeDb.deleteRecipe).toHaveBeenCalledWith({ id: 1 });
 });
 
-test('given a recipe does not exist, when deleteRecipe is called, then an error is thrown', () => {
-    mockRecipeDbGetRecipeById.mockReturnValueOnce(null);
+test('given: valid userId, when: getFavoriteRecipesByUserId is called, then: it returns favorite recipes', async () => {
+    const favoriteRecipe = new Recipe({
+        id: mockRecipe.getId(),
+        title: mockRecipe.getTitle(),
+        instructions: mockRecipe.getInstructions(),
+        cookingTime: mockRecipe.getCookingTime(),
+        category: mockRecipe.getCategory() as RecipeCategory,
+        ingredients: mockRecipe.getIngredients() || [],
+        isFavorite: true,
+    });
 
-    expectError(() => recipeService.deleteRecipe(1), 'Recipe with id 1 does not exist.');
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledWith({ id: 1 });
-    expect(mockRecipeDbGetRecipeById).toHaveBeenCalledTimes(1);
+    (recipeDb.getRecipesByUserId as jest.Mock).mockResolvedValue([favoriteRecipe]);
+
+    const recipes = await recipeService.getFavoriteRecipesByUserId(1);
+
+    expect(recipes).toEqual([favoriteRecipe]);
+    expect(recipeDb.getRecipesByUserId).toHaveBeenCalledWith(1);
 });
 
-test('given an invalid ID, when deleteRecipe is called, then an error is thrown', () => {
-    expectError(() => recipeService.deleteRecipe(-1), 'Invalid recipe ID');
-    expect(mockRecipeDbDeleteRecipe).not.toHaveBeenCalled();
-    expect(mockRecipeDbGetRecipeById).not.toHaveBeenCalled();
-});
+test('given: valid recipe data, when: createRecipe is called, then: it creates a new recipe', async () => {
+    const recipeData: NewRecipeInput = {
+        title: 'New Recipe',
+        instructions: 'Mix ingredients and cook.',
+        cookingTime: 20,
+        category: 'BREAKFAST',
+        ingredients: [
+            {
+                id: 1,
+                name: 'Flour',
+                category: 'PANTRY' as IngredientCategory,
+                unit: 'cups',
+                quantity: 2,
+            },
+        ],
+    };
 
-test('given no recipes exist, when getAllRecipes is called, then an empty array is returned', () => {
-    mockRecipeDbGetAllRecipes.mockReturnValueOnce([]);
+    const newRecipe = new Recipe({
+        id: 2,
+        title: 'New Recipe',
+        instructions: 'Mix ingredients and cook.',
+        cookingTime: 20,
+        category: 'BREAKFAST',
+        ingredients: [recipeIngredient],
+    });
 
-    const recipes = recipeService.getAllRecipes();
+    (recipeDb.addRecipe as jest.Mock).mockResolvedValue(newRecipe);
 
-    expect(recipes).toEqual([]);
-    expect(mockRecipeDbGetAllRecipes).toHaveBeenCalledTimes(1);
+    const recipe = await recipeService.createRecipe(recipeData, 1);
+
+    expect(recipe).toEqual(newRecipe);
+    expect(recipeDb.addRecipe).toHaveBeenCalled();
 });

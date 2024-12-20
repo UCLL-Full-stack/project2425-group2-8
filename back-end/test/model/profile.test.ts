@@ -1,11 +1,13 @@
 import { Profile } from '../../model/profile';
 import { User } from '../../model/user';
+import { Role } from '../../types';
 
 const user = new User({
     id: 1,
     username: 'testuser',
     password: 'password',
     profile: {} as Profile,
+    role: 'user' as Role,
 });
 
 const profileData = {
@@ -13,18 +15,15 @@ const profileData = {
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
-    user: user,
 };
 
 test('given: valid values for profile, when: profile is created, then: profile is created with those values', () => {
     const profile = new Profile(profileData);
-    user.setProfile(profile);
 
     expect(profile.getId()).toBe(profileData.id);
     expect(profile.getFirstName()).toBe(profileData.firstName);
     expect(profile.getLastName()).toBe(profileData.lastName);
     expect(profile.getEmail()).toBe(profileData.email);
-    expect(profile.getUser()).toBe(user);
 });
 
 test('given: missing first name, when: profile is created, then: error is thrown', () => {
@@ -54,15 +53,6 @@ test('given: missing email, when: profile is created, then: error is thrown', ()
     }).toThrow('Email is required and cannot be empty');
 });
 
-test('given: invalid user, when: profile is created, then: error is thrown', () => {
-    expect(() => {
-        new Profile({
-            ...profileData,
-            user: {} as User,
-        });
-    }).toThrow('User must be an instance of User');
-});
-
 test('given: new first name, when: first name is set, then: first name is updated', () => {
     const profile = new Profile(profileData);
     const newFirstName = 'NewFirstName';
@@ -82,16 +72,4 @@ test('given: new email, when: email is set, then: email is updated', () => {
     const newEmail = 'newemail@example.com';
     profile.setEmail(newEmail);
     expect(profile.getEmail()).toBe(newEmail);
-});
-
-test('given: new user, when: user is set, then: user is updated', () => {
-    const profile = new Profile(profileData);
-    const newUser = new User({
-        id: 2,
-        username: 'newuser',
-        password: 'newpassword',
-        profile: {} as Profile,
-    });
-    profile.setUser(newUser);
-    expect(profile.getUser()).toBe(newUser);
 });
