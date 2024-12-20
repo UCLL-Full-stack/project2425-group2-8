@@ -97,7 +97,7 @@ const saveSchedule = async (schedule: Schedule): Promise<Schedule> => {
             },
             data: {
                 recipes: {
-                    set: schedule.getRecipes()?.map((recipe) => ({
+                    connect: schedule.getRecipes()?.map((recipe) => ({
                         id: recipe.getId(),
                     })),
                 },
