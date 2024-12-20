@@ -1,6 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { ProfileUpdateInput, Role } from '../types';
-import profileService from '../service/profile.service';
+import { Role } from '../types';
 import userService from '../service/user.service';
 
 const profileRouter = express.Router();
@@ -39,58 +38,5 @@ profileRouter.get('/', async (req: Request, res: Response, next: NextFunction) =
         next(error);
     }
 });
-
-// NOT CORRECTLY IMPLEMENTED YET!!!
-// /**
-//  * @swagger
-//  * /profiles/{userId}:
-//  *   put:
-//  *     summary: Update profile
-//  *     tags: [Profiles]
-//  *     security:
-//  *       - bearerAuth: []
-//  *     parameters:
-//  *       - in: path
-//  *         name: userId
-//  *         required: true
-//  *         schema:
-//  *           type: integer
-//  *         description: The user ID
-//  *     requestBody:
-//  *       required: true
-//  *       content:
-//  *         application/json:
-//  *           schema:
-//  *             type: object
-//  *             properties:
-//  *               name:
-//  *                 type: string
-//  *               email:
-//  *                 type: string
-//  *               bio:
-//  *                 type: string
-//  *     responses:
-//  *       200:
-//  *         description: The updated profile object
-//  *       400:
-//  *         description: Bad request
-//  *       404:
-//  *         description: Profile not found
-//  *       500:
-//  *         description: Internal server error
-//  */
-// profileRouter.put('/:userId', async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         const request = req as Request & { auth: { username: string; role: Role } };
-//         const { role } = request.auth;
-//         const userId = Number(req.params.userId);
-
-//         const profileUpdate: ProfileUpdateInput = req.body;
-//         const updatedProfile = await profileService.updateProfile(userId, profileUpdate, role);
-//         res.status(200).json(updatedProfile);
-//     } catch (error) {
-//         next(error);
-//     }
-// });
 
 export { profileRouter };

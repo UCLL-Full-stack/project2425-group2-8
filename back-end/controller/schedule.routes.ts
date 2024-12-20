@@ -55,6 +55,44 @@ scheduleRouter.get('/', async (req: Request, res: Response, next: NextFunction) 
 
 /**
  * @swagger
+ * /schedules/copy/{date}:
+ *   get:
+ *     summary: Copy meals for a specific date
+ *     tags: [Schedules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: The date of the meals to copy
+ *     responses:
+ *       200:
+ *         description: The copied meals
+ *       403:
+ *         description: Unauthorized access
+ *       404:
+ *         description: No meals found for the specified date
+ */
+scheduleRouter.get('/copy/:date', async (req: Request, res: Response, next: NextFunction) => {
+    const { date } = req.params;
+    try {
+        const request = req as Request & { auth: { username: string; role: Role } };
+        const { username } = request.auth;
+        const userId = await userService.getUserIdFromUsername(username);
+
+        const copiedMeals = await scheduleService.copyMeals(userId, new Date(date));
+        res.status(200).json(copiedMeals);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
  * /schedules:
  *   post:
  *     summary: Schedule a new recipe
@@ -206,91 +244,6 @@ scheduleRouter.delete('/:recipeId', async (req: Request, res: Response, next: Ne
             role
         );
         res.status(204).send();
-    } catch (error) {
-        next(error);
-    }
-});
-
-/**
- * @swagger
- * /schedules/copy/{date}:
- *   get:
- *     summary: Copy meals for a specific date
- *     tags: [Schedules]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: date
- *         required: true
- *         schema:
- *           type: string
- *           format: date
- *         description: The date of the meals to copy
- *     responses:
- *       200:
- *         description: The copied meals
- *       403:
- *         description: Unauthorized access
- *       404:
- *         description: No meals found for the specified date
- */
-scheduleRouter.get('/copy/:date', async (req: Request, res: Response, next: NextFunction) => {
-    const { date } = req.params;
-    try {
-        const request = req as Request & { auth: { username: string; role: Role } };
-        const { username } = request.auth;
-        const userId = await userService.getUserIdFromUsername(username);
-
-        const copiedMeals = await scheduleService.copyMeals(userId, new Date(date));
-        res.status(200).json(copiedMeals);
-    } catch (error) {
-        next(error);
-    }
-});
-
-/**
- * @swagger
- * /schedules/paste:
- *   post:
- *     summary: Paste copied meals to a new date
- *     tags: [Schedules]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               sourceDate:
- *                 type: string
- *                 format: date
- *               targetDate:
- *                 type: string
- *                 format: date
- *     responses:
- *       200:
- *         description: The pasted meals
- *       403:
- *         description: Unauthorized access
- *       404:
- *         description: No meals found for the source date
- */
-scheduleRouter.post('/paste', async (req: Request, res: Response, next: NextFunction) => {
-    const { sourceDate, targetDate } = req.body;
-    try {
-        const request = req as Request & { auth: { username: string; role: Role } };
-        const { username } = request.auth;
-        const userId = await userService.getUserIdFromUsername(username);
-
-        const pastedMeals = await scheduleService.pasteMeals(
-            userId,
-            new Date(sourceDate),
-            new Date(targetDate)
-        );
-        res.status(200).json(pastedMeals);
     } catch (error) {
         next(error);
     }

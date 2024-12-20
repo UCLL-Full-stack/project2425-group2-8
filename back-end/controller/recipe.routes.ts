@@ -79,19 +79,6 @@ recipeRouter.get('/:recipeId', async (req: Request, res: Response, next: NextFun
     }
 });
 
-recipeRouter.get('/favorites', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const request = req as Request & { auth: { username: string; role: Role } };
-        const { username } = request.auth;
-        const userId = await userService.getUserIdFromUsername(username);
-
-        const favorites = await recipeService.getFavoriteRecipesByUserId(userId);
-        res.status(200).json(favorites.map((recipe) => recipe.toJSON()));
-    } catch (error) {
-        next(error);
-    }
-});
-
 /**
  * @swagger
  * /recipes:
