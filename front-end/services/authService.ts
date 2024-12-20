@@ -33,6 +33,17 @@ const login = async (data: LoginData) => {
   });
 };
 
-const authService = { register, login };
+const loginAsGuest = async (guestUsername: string) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  return fetch(`${apiUrl}/users/loginAsGuest`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ guestUsername }),
+  });
+};
+
+const authService = { register, login, loginAsGuest };
 
 export default authService;

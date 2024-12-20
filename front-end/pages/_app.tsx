@@ -39,6 +39,11 @@ const App = ({ Component, pageProps }: AppProps) => {
     router.pathname !== "/auth" &&
     router.pathname !== "/register";
 
+  const showBreadcrumb =
+    isLoggedIn &&
+    router.pathname !== "/auth" &&
+    router.pathname !== "/register";
+
   const getPageName = () => {
     const routeNameMap: { [key: string]: string } = {
       "/": "Home",
@@ -78,30 +83,36 @@ const App = ({ Component, pageProps }: AppProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="app-wrapper">
+      <div
+        className={`app-wrapper ${
+          router.pathname === "/auth" ? "bg-gray-100" : ""
+        }`}
+      >
         {showSidebar && <AppSidebar />}
         <main className="main-content">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <Breadcrumb className="flex-1">
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/planner">Plateful</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{t(getPageName())}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <Button
-              variant="ghost"
-              className="text-gray-700 hover:bg-gray-200"
-              onClick={handleLanguageChange}
-            >
-              <Globe className="h-5 w-5" />
-              <span>{router.locale === "en" ? "中文" : "EN"}</span>
-            </Button>
-          </header>
+          {showBreadcrumb && (
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <Breadcrumb className="flex-1">
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/planner">Plateful</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{t(getPageName())}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+              <Button
+                variant="ghost"
+                className="text-gray-700 hover:bg-gray-200"
+                onClick={handleLanguageChange}
+              >
+                <Globe className="h-5 w-5" />
+                <span>{router.locale === "en" ? "中文" : "EN"}</span>
+              </Button>
+            </header>
+          )}
           <div className="p-4">
             {isLoggedIn ||
             router.pathname === "/auth" ||

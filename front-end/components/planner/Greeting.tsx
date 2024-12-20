@@ -37,7 +37,11 @@ const Greeting: React.FC<GreetingProps> = ({ user }) => {
         <p className="ml-2 text-lg font-semibold m-0">
           {greeting},{" "}
           <span className="font-bold">
-            {user ? capitalizeFirstLetter(user.name) : ""}
+            {user
+              ? user.name === "guest"
+                ? "Guest"
+                : capitalizeFirstLetter(user.name)
+              : ""}
           </span>
           !
         </p>

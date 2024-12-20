@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useTranslation } from "next-i18next";
 import { Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const AuthToggle = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -38,17 +39,24 @@ const AuthToggle = () => {
   return (
     <Card className="w-[350px]">
       <CardHeader className="relative">
-        <CardTitle className="text-2xl">Plateful</CardTitle>
-        <CardDescription>
-          {isLogin ? t("welcomeBack") : t("createNewAccount")}
-        </CardDescription>
-        <button
-          onClick={handleLanguageChange}
-          className="absolute top-0 right-0 flex justify-center items-center w-8 h-8 rounded-full text-primary hover:bg-avatar-hover-bg"
-          aria-label="Change Language"
-        >
-          <Globe size={24} />
-        </button>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-2xl">Plateful</CardTitle>
+            <CardDescription>
+              {isLogin ? t("welcomeBack") : t("createNewAccount")}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleLanguageChange}
+              className="w-6 h-6 rounded-full"
+              aria-label="Change Language"
+            >
+              <Globe size={24} />
+            </button>
+            <span>{router.locale === "en" ? "中文" : "EN"}</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs

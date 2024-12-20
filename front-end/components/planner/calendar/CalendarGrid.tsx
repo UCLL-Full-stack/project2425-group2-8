@@ -20,8 +20,16 @@ const CalendarGrid: React.FC = () => {
   const [recipesByDate, setRecipesByDate] = useState<Record<string, Recipe[]>>(
     {}
   );
+  const [isGuest, setIsGuest] = useState(false);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role === "guest") {
+      setIsGuest(true);
+    }
+  }, []);
 
   const handleAddNewMeal = () => {
     setIsAddNewMealOpen(true);
@@ -100,7 +108,7 @@ const CalendarGrid: React.FC = () => {
 
   useEffect(() => {
     fetchMonthRecipes();
-  }, [fetchMonthRecipes]);
+  }, [fetchMonthRecipes, currentDate]);
 
   // calculate days that should be displayed in the calendar for 1 full grid
   const getDaysInGrid = (date: Date) => {
@@ -257,7 +265,7 @@ const CalendarGrid: React.FC = () => {
       </CardContent>
       {showRecipePopup && selectedDate && (
         <DailyMealsPopup
-          userId={1} // Replace with actual user ID
+          userId={1}
           date={selectedDate}
           onClose={() => setShowRecipePopup(false)}
         />

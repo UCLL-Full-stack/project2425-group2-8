@@ -20,6 +20,8 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
+  const [inviterUsername, setInviterUsername] = useState("");
+  const [isGuestLogin, setIsGuestLogin] = useState(false);
 
   const router = useRouter();
   const { t } = useTranslation("common");
@@ -105,48 +107,98 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      const response = await AuthService.loginAsGuest(inviterUsername);
+      if (response.ok) {
+        const userData = await response.json();
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("role", "guest");
+        localStorage.setItem("guestOf", inviterUsername);
+        router.push("/planner");
+      } else {
+        console.error("Guest login failed");
+      }
+    } catch (error) {
+      console.error("Error logging in as guest:", error);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="username">{t("username")}</Label>
-        <Input
-          id="username"
-          name="username"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          required
-        />
-        {usernameError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{usernameError}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">{t("password")}</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-        {passwordError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{passwordError}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-      {formError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
+      {isGuestLogin ? (
+        <>
+          <Label htmlFor="inviterUsername">{t("inviterUsername")}</Label>
+          <Input
+            id="inviterUsername"
+            value={inviterUsername}
+            onChange={(e) => setInviterUsername(e.target.value)}
+            required
+          />
+          <div className="flex gap-3">
+            <Button onClick={handleGuestLogin} className="bg-gray-900">
+              {t("loginAsGuest")}
+            </Button>
+            <Button
+              onClick={() => setIsGuestLogin(false)}
+              className="bg-teal-700 hover:bg-teal-600"
+            >
+              {t("backToLogin")}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="username">{t("username")}</Label>
+            <Input
+              id="username"
+              name="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              required
+            />
+            {usernameError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{usernameError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">{t("password")}</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+            {passwordError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{passwordError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          {formError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
+          <div className="flex gap-3">
+            <Button type="submit">{t("login")}</Button>
+            <Button
+              onClick={() => setIsGuestLogin(true)}
+              className="bg-teal-700 hover:bg-teal-600"
+            >
+              {t("loginAsGuest")}
+            </Button>
+          </div>
+        </>
       )}
-      <Button type="submit">{t("login")}</Button>
     </form>
   );
 };

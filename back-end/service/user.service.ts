@@ -101,6 +101,14 @@ const authenticate = async ({
     };
 };
 
+const loginAsGuest = async (guestUsername: string): Promise<string> => {
+    const user = await getUserByUsername(guestUsername);
+    if (!user) {
+        throw new Error('User not found.');
+    }
+    return generateJWTtoken({ username: guestUsername, role: 'guest' });
+};
+
 const getOwnProfile = async (username: string, role: Role): Promise<User> => {
     if (role === 'user' || role === 'admin') {
         return await getUserByUsername(username);
@@ -119,4 +127,5 @@ export default {
     authenticate,
     getUserIdFromUsername,
     getOwnProfile,
+    loginAsGuest,
 };

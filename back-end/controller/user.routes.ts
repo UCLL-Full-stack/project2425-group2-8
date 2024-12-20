@@ -167,4 +167,44 @@ userRouter.post('/login', async (req: Request, res: Response, next: NextFunction
     }
 });
 
+/**
+ * @swagger
+ * /users/loginAsGuest:
+ *   post:
+ *     summary: Login as a guest using the inviter's username. Returns an object with JWT token when successful.
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               guestUsername:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+userRouter.post('/loginAsGuest', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { guestUsername } = req.body;
+        const token = await userService.loginAsGuest(guestUsername);
+        res.status(200).json({ token });
+    } catch (error) {
+        next(error);
+    }
+});
+
 export { userRouter };
