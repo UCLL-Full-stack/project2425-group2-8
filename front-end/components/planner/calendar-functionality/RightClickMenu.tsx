@@ -2,7 +2,7 @@
  * RightClickMenu component is a context menu
  */
 
-import { Plus, Trash2, Heart } from "lucide-react";
+import { Trash2, Heart } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -34,11 +34,11 @@ const RightClickMenu: React.FC<Props> = ({
       <ContextMenuContent className="w-48">
         <ContextMenuItem onClick={onAddExistingMeal}>
           <Heart className="mr-2 h-4 w-4" />
-          Add Existing Meal
+          {t("addExistingMeal")}
         </ContextMenuItem>
         <ContextMenuItem onClick={onDeleteMeals}>
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete Meals
+          {t("deleteMeals")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
