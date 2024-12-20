@@ -1,45 +1,15 @@
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import RecipeService from "@/services/RecipeService";
-import { Recipe } from "@/types/recipes";
 import RecipeHeader from "@/components/recipe/RecipeHeader";
 import RecipeContent from "@/components/recipe/RecipeContent";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "next-i18next";
+import { useRecipe } from "@/hooks/useRecipe";
 
 export default function RecipePage() {
   const router = useRouter();
   const { id } = router.query;
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { recipe, isLoading, isError } = useRecipe(id);
   const { t } = useTranslation("common");
-
-  useEffect(() => {
-    const fetchRecipe = async () => {
-      if (id && !Array.isArray(id)) {
-        const recipeId = parseInt(id, 10);
-        if (isNaN(recipeId)) {
-          setError("Invalid recipe ID");
-          return;
-        }
-        try {
-          const data = await RecipeService.fetchRecipeById(recipeId);
-          setRecipe(data);
-        } catch (error) {
-          console.error("Error in fetchRecipe:", error);
-          setError(
-            `Failed to load recipe details: ${
-              error instanceof Error ? error.message : String(error)
-            }`
-          );
-        }
-      }
-    };
-
-    if (router.isReady) {
-      fetchRecipe();
-    }
-  }, [id]);
 
   const handleBack = () => {
     router.back();
@@ -58,8 +28,8 @@ export default function RecipePage() {
         },
         token
       );
-      const updatedRecipe = await RecipeService.fetchRecipeById(mealId);
-      setRecipe(updatedRecipe);
+      // Revalidate SWR cache
+      mutate(`/api/recipes/${mealId}`);
     } catch (error) {
       setError(t("errorUpdatingMeal"));
     }
@@ -75,10 +45,18 @@ export default function RecipePage() {
     }
   };
 
-  if (error)
+  if (isError)
     return (
       <div className="flex flex-col justify-center items-center h-screen">
-        <p className="text-red-500 mb-4">{error}</p>
+        <p className="text-red-500 mb-4">{isError.message}</p>
+        <Button onClick={handleBack}>Back</Button>
+      </div>
+    );
+
+  if (isLoading)
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <p className="mb-4">Loading...</p>
         <Button onClick={handleBack}>Back</Button>
       </div>
     );
