@@ -7,12 +7,6 @@ type Ingredient = {
   store?: string;
 };
 
-// type RecipeIngredient = {
-//   ingredient: Ingredient;
-//   unit: string;
-//   quantity: number;
-// };
-
 type Recipe = {
   id?: number;
   title: string;

@@ -47,6 +47,9 @@ export default function RecipePage() {
 
   const handleToggleFavorite = async (mealId: number, isFavorite: boolean) => {
     try {
+      if (isNaN(mealId)) {
+        throw new Error("Invalid meal ID");
+      }
       const token = localStorage.getItem("token") || "";
       await RecipeService.updateRecipe(
         mealId,
@@ -60,11 +63,6 @@ export default function RecipePage() {
     } catch (error) {
       setError(t("errorUpdatingMeal"));
     }
-  };
-
-  // TO IMPLEMENT
-  const handleEdit = () => {
-    console.log("Edit recipe");
   };
 
   const handleDelete = async (mealId: number) => {
@@ -98,9 +96,10 @@ export default function RecipePage() {
       <RecipeHeader
         isFavorite={recipe.isFavorite ?? false}
         onBack={handleBack}
-        onToggleFavorite={handleToggleFavorite}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onToggleFavorite={() =>
+          handleToggleFavorite(recipe!.id, recipe!.isFavorite ?? false)
+        }
+        onDelete={() => handleDelete(recipe!.id)}
       />
       <main className="container mx-auto px-4 py-8">
         <RecipeContent recipe={recipe} />

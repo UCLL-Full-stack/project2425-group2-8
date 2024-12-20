@@ -9,7 +9,6 @@ type Props = {
   isFavorite: boolean;
   onBack: () => void;
   onToggleFavorite: () => void;
-  onEdit: () => void;
   onDelete: () => void;
 };
 
@@ -17,7 +16,6 @@ const RecipeHeader: React.FC<Props> = ({
   isFavorite,
   onBack,
   onToggleFavorite,
-  onEdit,
   onDelete,
 }) => {
   return (
@@ -41,10 +39,6 @@ const RecipeHeader: React.FC<Props> = ({
               <span className="sr-only">
                 {isFavorite ? "Remove from favorites" : "Add to favorites"}
               </span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Edit2 className="h-5 w-5" />
-              <span className="sr-only">Edit recipe</span>
             </Button>
             <Button
               variant="ghost"
