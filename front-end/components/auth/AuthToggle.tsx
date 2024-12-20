@@ -37,7 +37,7 @@ const AuthToggle = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <Card className="w-[350px]">
         <CardHeader className="relative">
           <div className="flex justify-between items-center">

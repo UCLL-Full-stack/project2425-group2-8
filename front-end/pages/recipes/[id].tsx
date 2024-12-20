@@ -4,6 +4,8 @@ import RecipeContent from "@/components/recipe/RecipeContent";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "next-i18next";
 import { useRecipe } from "@/hooks/useRecipe";
+import { mutate } from "swr";
+import RecipeService from "@/services/RecipeService";
 
 export default function RecipePage() {
   const router = useRouter();
@@ -28,10 +30,10 @@ export default function RecipePage() {
         },
         token
       );
-      // Revalidate SWR cache
+
       mutate(`/api/recipes/${mealId}`);
     } catch (error) {
-      setError(t("errorUpdatingMeal"));
+      isError(t("errorUpdatingMeal"));
     }
   };
 
@@ -41,7 +43,7 @@ export default function RecipePage() {
       await RecipeService.deleteRecipe(mealId, token);
       router.back();
     } catch (error) {
-      setError(t("errorDeletingMeal"));
+      isError(t("errorDeletingMeal"));
     }
   };
 
