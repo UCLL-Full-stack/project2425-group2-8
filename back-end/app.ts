@@ -9,7 +9,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { expressjwt } from 'express-jwt';
 import { profileRouter } from './controller/profile.routes';
-import helmet from 'helmet'; 
+import helmet from 'helmet';
 
 const app = express();
 dotenv.config();
@@ -107,7 +107,6 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// 使用 Helmet 保护 HTTP 头
 app.use(helmet());
 
 app.use(cors({ origin: 'http://localhost:8080' }));
@@ -132,12 +131,12 @@ app.get('/status', (req, res) => {
 });
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack); 
-    res.status(500).json({ message: 'Something went wrong!' }); 
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!' });
 });
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack); 
+    console.error(err.stack);
 
     if (err.name === 'UnauthorizedError') {
         res.status(401).json({ status: 'unauthorized', message: err.message });
