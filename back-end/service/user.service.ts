@@ -4,6 +4,7 @@ import { UserSignupInput, AuthenticationResponse, UserLoginInput, Role } from '.
 import { Profile } from '../model/profile';
 import bcrypt from 'bcrypt';
 import generateJWTtoken from '../util/jwt';
+import scheduleDb from '../repository/schedule.db';
 import { UnauthorizedError } from 'express-jwt';
 
 const getAllUsers = async (role: Role): Promise<User[]> => {
@@ -61,6 +62,14 @@ const createUser = async ({
     const user = new User({ username, password: hashedPassword, profile, role: 'user' as Role });
 
     const createdUser = await userDb.addUser(user);
+
+    const userId = createdUser.getId();
+    if (userId === undefined) {
+        throw new Error('User ID is undefined.');
+    }
+    const schedule = await scheduleDb.createSchedule(userId, new Date());
+    createdUser.setSchedule(schedule);
+
     if (!createdUser.getSchedule()) {
         throw new Error('Failed to create schedule for the user.');
     }

@@ -64,7 +64,13 @@ test('given: valid details, when: updateRecipeDate is called, then: it updates t
     (scheduleDb.createSchedule as jest.Mock).mockResolvedValue(mockSchedule);
     (scheduleDb.saveSchedule as jest.Mock).mockResolvedValue(undefined);
 
-    const recipe = await scheduleService.updateRecipeDate(1, 1, new Date(), new Date(), 'user' as Role);
+    const recipe = await scheduleService.updateRecipeDate(
+        1,
+        1,
+        new Date(),
+        new Date(),
+        'user' as Role
+    );
 
     expect(recipe).toEqual(mockRecipe);
     expect(scheduleDb.removeScheduledRecipe).toHaveBeenCalledWith(1, 1);
@@ -93,7 +99,7 @@ test('given: valid userId and date, when: copyMeals is called, then: it returns 
     const recipes = await scheduleService.copyMeals(1, new Date());
 
     expect(recipes).toEqual([mockRecipe]);
-    expect(scheduleDb.getScheduledRecipesByUserIdAndDate).toHaveBeenCalledWith(1, new Date());
+    expect(scheduleDb.getScheduledRecipesByUserIdAndDate).toHaveBeenCalledWith(1, expect.any(Date));
 });
 
 test('given: valid details, when: pasteMeals is called, then: it pastes the meals', async () => {

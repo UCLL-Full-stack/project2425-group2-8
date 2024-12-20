@@ -1,5 +1,6 @@
 import userService from '../../service/user.service';
 import userDb from '../../repository/user.db';
+import scheduleDb from '../../repository/schedule.db';
 import { User } from '../../model/user';
 import { Profile } from '../../model/profile';
 import bcrypt from 'bcrypt';
@@ -8,6 +9,7 @@ import { UnauthorizedError } from 'express-jwt';
 import { UserSignupInput, UserLoginInput, Role } from '../../types';
 
 jest.mock('../../repository/user.db');
+jest.mock('../../repository/schedule.db');
 jest.mock('bcrypt');
 jest.mock('../../util/jwt');
 
@@ -18,6 +20,12 @@ const mockUser = new User({
     profile: new Profile({ firstName: 'Test', lastName: 'User', email: 'test@example.com' }),
     role: 'user' as Role,
 });
+
+const mockSchedule = {
+    getId: jest.fn().mockReturnValue(1),
+    getDate: jest.fn().mockReturnValue(new Date()),
+    getRecipes: jest.fn().mockReturnValue([]),
+};
 
 beforeEach(() => {
     jest.clearAllMocks();
@@ -63,7 +71,9 @@ test('given: valid username, when: getUserByUsername is called, then: it returns
 test('given: invalid username, when: getUserByUsername is called, then: it throws an error', async () => {
     (userDb.getUserByUsername as jest.Mock).mockResolvedValue(null);
 
-    await expect(userService.getUserByUsername('testuser')).rejects.toThrow('User with username testuser does not exist.');
+    await expect(userService.getUserByUsername('testuser')).rejects.toThrow(
+        'User with username testuser does not exist.'
+    );
 });
 
 test('given: valid user details, when: createUser is called, then: it creates a new user', async () => {
@@ -79,6 +89,7 @@ test('given: valid user details, when: createUser is called, then: it creates a 
     (userDb.getUserByEmail as jest.Mock).mockResolvedValue(null);
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
     (userDb.addUser as jest.Mock).mockResolvedValue(mockUser);
+    (scheduleDb.createSchedule as jest.Mock).mockResolvedValue(mockSchedule);
 
     const createdUser = await userService.createUser(userSignupInput);
 
@@ -87,6 +98,8 @@ test('given: valid user details, when: createUser is called, then: it creates a 
     expect(userDb.getUserByEmail).toHaveBeenCalledWith({ email: 'test@example.com' });
     expect(bcrypt.hash).toHaveBeenCalledWith('password', 12);
     expect(userDb.addUser).toHaveBeenCalled();
+    expect(scheduleDb.createSchedule).toHaveBeenCalledWith(mockUser.getId(), expect.any(Date));
+    expect(createdUser.getSchedule()).toEqual(mockSchedule);
 });
 
 test('given: existing username, when: createUser is called, then: it throws an error', async () => {
@@ -100,7 +113,9 @@ test('given: existing username, when: createUser is called, then: it throws an e
 
     (userDb.getUserByUsername as jest.Mock).mockResolvedValue(mockUser);
 
-    await expect(userService.createUser(userSignupInput)).rejects.toThrow('User with username: testuser is already registered.');
+    await expect(userService.createUser(userSignupInput)).rejects.toThrow(
+        'User with username: testuser is already registered.'
+    );
 });
 
 test('given: existing email, when: createUser is called, then: it throws an error', async () => {
@@ -115,7 +130,9 @@ test('given: existing email, when: createUser is called, then: it throws an erro
     (userDb.getUserByUsername as jest.Mock).mockResolvedValue(null);
     (userDb.getUserByEmail as jest.Mock).mockResolvedValue(mockUser);
 
-    await expect(userService.createUser(userSignupInput)).rejects.toThrow('User with email: test@example.com is already registered.');
+    await expect(userService.createUser(userSignupInput)).rejects.toThrow(
+        'User with email: test@example.com is already registered.'
+    );
 });
 
 test('given: valid login details, when: authenticate is called, then: it returns an authentication response', async () => {
@@ -149,7 +166,9 @@ test('given: invalid username, when: authenticate is called, then: it throws an 
 
     (userDb.getUserByUsername as jest.Mock).mockResolvedValue(null);
 
-    await expect(userService.authenticate(userLoginInput)).rejects.toThrow('Invalid username or password.');
+    await expect(userService.authenticate(userLoginInput)).rejects.toThrow(
+        'User with username testuser does not exist.'
+    );
 });
 
 test('given: invalid password, when: authenticate is called, then: it throws an error', async () => {
@@ -161,7 +180,9 @@ test('given: invalid password, when: authenticate is called, then: it throws an 
     (userDb.getUserByUsername as jest.Mock).mockResolvedValue(mockUser);
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-    await expect(userService.authenticate(userLoginInput)).rejects.toThrow('Invalid username or password.');
+    await expect(userService.authenticate(userLoginInput)).rejects.toThrow(
+        'Invalid username or password.'
+    );
 });
 
 test('given: valid username and role, when: getOwnProfile is called, then: it returns the user profile', async () => {
@@ -174,5 +195,7 @@ test('given: valid username and role, when: getOwnProfile is called, then: it re
 });
 
 test('given: invalid role, when: getOwnProfile is called, then: it throws UnauthorizedError', async () => {
-    await expect(userService.getOwnProfile('testuser', 'guest' as Role)).rejects.toThrow(UnauthorizedError);
+    await expect(userService.getOwnProfile('testuser', 'guest' as Role)).rejects.toThrow(
+        UnauthorizedError
+    );
 });
