@@ -1,4 +1,4 @@
-import { Recipe } from '@prisma/client';
+import { Recipe } from '../model/recipe';
 import { Schedule } from '../model/schedule';
 import database from './database';
 
@@ -49,6 +49,23 @@ const getScheduledRecipesByUserIdAndDate = async (
 
 const createSchedule = async (userId: number, date: Date): Promise<Schedule> => {
     try {
+        const existingSchedule = await database.schedule.findUnique({
+            where: { userId },
+        });
+
+        if (existingSchedule) {
+            return new Schedule({
+                id: existingSchedule.id,
+                date: existingSchedule.createdAt,
+                recipes: (
+                    await database.recipe.findMany({
+                        where: { scheduleId: existingSchedule.id },
+                        include: { ingredients: true },
+                    })
+                ).map((recipe) => Recipe.from(recipe)),
+            });
+        }
+
         const newSchedulePrisma = await database.schedule.create({
             data: {
                 userId,
