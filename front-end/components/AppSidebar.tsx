@@ -65,7 +65,9 @@ const AppSidebar: React.FC = () => {
             className="flex items-center gap-3 rounded-lg px-3 pt-4 pb-3 transition-colors text-white hover:bg-gray-800"
           >
             <item.icon className="h-6 w-6" />
-            <span>{item.label}</span>
+            <span>
+              {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
+            </span>
           </Link>
         ))}
         <Link
@@ -74,7 +76,9 @@ const AppSidebar: React.FC = () => {
           onClick={handleLogout}
         >
           <LogOut className="h-6 w-6" />
-          <span>{t("logout")}</span>
+          <span>
+            {t("logout").charAt(0).toUpperCase() + t("logout").slice(1)}
+          </span>
         </Link>
       </nav>
     </aside>

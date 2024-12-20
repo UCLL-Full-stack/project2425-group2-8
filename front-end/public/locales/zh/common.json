@@ -91,5 +91,8 @@
   "favorite": "收藏",
   "delete": "删除",
   "users": "用户",
-  "recipe": "食谱"
+  "recipe": "食谱",
+  "loginAsGuest": "以访客身份登录",
+  "backToLogin": "返回登录",
+  "usersOverview": "用户概览"
 }

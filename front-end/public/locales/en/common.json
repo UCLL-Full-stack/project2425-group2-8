@@ -92,5 +92,7 @@
   "delete": "Delete",
   "users": "Users",
   "recipe": "Recipe",
-  "loginAsGuest": "Login as Guest"
+  "loginAsGuest": "Login as Guest",
+  "backToLogin": "Back to Login",
+  "usersOverview": "Users Overview"
 }

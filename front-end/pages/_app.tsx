@@ -47,9 +47,9 @@ const App = ({ Component, pageProps }: AppProps) => {
   const getPageName = () => {
     const routeNameMap: { [key: string]: string } = {
       "/": "Home",
-      "/planner": "planner",
-      "/recipes": "recipes",
-      "/users": "users",
+      "/planner": "Planner",
+      "/recipes": "Recipes",
+      "/users": "Users",
     };
 
     if (router.pathname.startsWith("/recipes/[id]")) {

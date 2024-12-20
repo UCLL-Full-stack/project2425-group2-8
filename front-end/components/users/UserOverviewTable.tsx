@@ -1,3 +1,4 @@
+import { useTranslation } from "next-i18next";
 import {
   Table,
   TableBody,
@@ -13,8 +14,11 @@ interface UserOverviewTableProps {
 }
 
 export function UserOverviewTable({ data }: UserOverviewTableProps) {
+  const { t } = useTranslation("common");
+
   return (
     <div className="rounded-md border border-gray-300">
+      <h2 className="text-xl font-semibold p-4">{t("usersOverview")}</h2>
       <Table className="min-w-full divide-y divide-gray-200">
         <TableHeader className="bg-gray-50">
           <TableRow>

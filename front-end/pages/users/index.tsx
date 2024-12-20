@@ -63,7 +63,6 @@ const Users: React.FC = () => {
         <title>{t("users")}</title>
       </Head>
       <main className="flex flex-col items-start justify-start min-h-screen">
-        <h1 className="page-title">{t("users")}</h1>
         <section className="w-full bg-white p-8 rounded-lg">
           {users.length > 0 && <UserOverviewTable data={users} />}
         </section>
